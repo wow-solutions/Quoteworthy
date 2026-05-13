@@ -63,3 +63,4 @@ outputs/
 .obsidian/workspace-mobile.json
 .obsidian/cache
 .claude/worktrees/
+.gstack/
