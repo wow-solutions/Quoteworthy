@@ -2,6 +2,7 @@ import { getBrandFromRequest } from "@/lib/get-brand";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/shell/top-bar";
 import { BrandContextStrip } from "@/components/brand/brand-context-strip";
+import type { BrandOption } from "@/components/brand/brand-switcher";
 import { WriterClient } from "./writer-client";
 
 type PageProps = {
@@ -14,27 +15,53 @@ export default async function WriterPage({ searchParams }: PageProps) {
 
   const supabase = await createClient();
 
-  const [{ data: brandConfig }, { data: account }, { count: postCount }] =
-    await Promise.all([
-      supabase
-        .from("brand_configs")
-        .select(
-          "brand_voice, tone_attributes, forbidden_words, voc_pain_points, seo_keywords_primary",
-        )
-        .eq("brand_id", brand.id)
-        .maybeSingle(),
-      supabase
-        .from("accounts")
-        .select("display_name")
-        .eq("id", userId)
-        .maybeSingle(),
-      supabase
-        .from("posts")
-        .select("id", { count: "exact", head: true })
-        .eq("brand_id", brand.id),
-    ]);
+  const [
+    { data: allBrands },
+    { data: allConfigs },
+    { data: allPosts },
+    { data: account },
+  ] = await Promise.all([
+    supabase
+      .from("brands")
+      .select("id, name, slug")
+      .is("deleted_at", null)
+      .order("name"),
+    supabase
+      .from("brand_configs")
+      .select(
+        "brand_id, brand_voice, tone_attributes, forbidden_words, voc_pain_points, seo_keywords_primary",
+      ),
+    supabase.from("posts").select("brand_id"),
+    supabase
+      .from("accounts")
+      .select("display_name")
+      .eq("id", userId)
+      .maybeSingle(),
+  ]);
 
-  const voiceSummary = formatVoiceSummary(brandConfig?.tone_attributes ?? []);
+  const brandsList = allBrands ?? [];
+  const configsList = allConfigs ?? [];
+  const postsList = allPosts ?? [];
+
+  const postCounts: Record<string, number> = {};
+  for (const p of postsList) {
+    postCounts[p.brand_id] = (postCounts[p.brand_id] ?? 0) + 1;
+  }
+
+  const switcherBrands: BrandOption[] = brandsList.map((b) => {
+    const cfg = configsList.find((c) => c.brand_id === b.id);
+    return {
+      id: b.id,
+      name: b.name,
+      slug: b.slug,
+      postCount: postCounts[b.id] ?? 0,
+      toneSummary: formatToneSummary(cfg?.tone_attributes ?? []),
+    };
+  });
+
+  const currentConfig = configsList.find((c) => c.brand_id === brand.id);
+  const currentPostCount = postCounts[brand.id] ?? 0;
+  const voiceSummary = formatToneSummary(currentConfig?.tone_attributes ?? []);
 
   const accountDisplayName = account?.display_name ?? "";
   const userInitials = makeInitials(accountDisplayName);
@@ -50,14 +77,11 @@ export default async function WriterPage({ searchParams }: PageProps) {
       }}
     >
       <TopBar
-        brand={{
-          id: brand.id,
-          name: brand.name,
-          slug: brand.slug,
-          postCount: postCount ?? 0,
-        }}
+        brands={switcherBrands}
+        currentBrandId={brand.id}
         breadcrumbSection="Writer"
         userInitials={userInitials}
+        newPostHref={`/writer?brand=${brand.id}`}
       />
       <BrandContextStrip
         brand={{
@@ -65,24 +89,24 @@ export default async function WriterPage({ searchParams }: PageProps) {
           name: brand.name,
           slug: brand.slug,
           voiceSummary,
-          postCount: postCount ?? 0,
+          postCount: currentPostCount,
         }}
       />
       <WriterClient
         brandId={brand.id}
         brandName={brand.name}
         brandConfig={{
-          brandVoice: brandConfig?.brand_voice ?? null,
-          toneAttributes: brandConfig?.tone_attributes ?? [],
-          forbiddenWords: brandConfig?.forbidden_words ?? [],
-          seoKeywords: brandConfig?.seo_keywords_primary ?? [],
+          brandVoice: currentConfig?.brand_voice ?? null,
+          toneAttributes: currentConfig?.tone_attributes ?? [],
+          forbiddenWords: currentConfig?.forbidden_words ?? [],
+          seoKeywords: currentConfig?.seo_keywords_primary ?? [],
         }}
       />
     </div>
   );
 }
 
-function formatVoiceSummary(toneAttributes: string[]): string | undefined {
+function formatToneSummary(toneAttributes: string[]): string | undefined {
   if (toneAttributes.length === 0) return undefined;
   return toneAttributes
     .slice(0, 3)

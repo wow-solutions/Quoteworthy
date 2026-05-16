@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/shell/top-bar";
 import { BrandDot } from "@/components/brand/brand-dot";
+import type { BrandOption } from "@/components/brand/brand-switcher";
 import { brandColor } from "@/lib/brand-color";
 import { signout } from "./actions";
 
@@ -25,19 +26,44 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     .eq("id", user.id)
     .single();
 
-  const { data: brands } = await supabase
-    .from("brands")
-    .select("id, name, slug, industry, primary_language, created_at")
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+  const [{ data: brands }, { data: allConfigs }, { data: allPosts }] =
+    await Promise.all([
+      supabase
+        .from("brands")
+        .select("id, name, slug, industry, primary_language, created_at")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false }),
+      supabase.from("brand_configs").select("brand_id, tone_attributes"),
+      supabase.from("posts").select("brand_id"),
+    ]);
 
   const list = brands ?? [];
+  const configsList = allConfigs ?? [];
+  const postsList = allPosts ?? [];
+
+  const postCounts: Record<string, number> = {};
+  for (const p of postsList) {
+    postCounts[p.brand_id] = (postCounts[p.brand_id] ?? 0) + 1;
+  }
+
+  const switcherBrands: BrandOption[] = list.map((b) => {
+    const cfg = configsList.find((c) => c.brand_id === b.id);
+    return {
+      id: b.id,
+      name: b.name,
+      slug: b.slug,
+      postCount: postCounts[b.id] ?? 0,
+      toneSummary: formatToneSummary(cfg?.tone_attributes ?? []),
+    };
+  });
+
   const userInitials = makeInitials(account?.display_name ?? user.email ?? "");
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <TopBar
-        brand={null}
+        brands={switcherBrands}
+        currentBrandId={null}
         breadcrumbSection="Brands"
         userInitials={userInitials}
       />
@@ -381,4 +407,12 @@ function makeInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2);
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function formatToneSummary(toneAttributes: string[]): string | undefined {
+  if (toneAttributes.length === 0) return undefined;
+  return toneAttributes
+    .slice(0, 3)
+    .map((t) => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
+    .join(" · ");
 }

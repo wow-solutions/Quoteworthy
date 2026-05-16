@@ -1,17 +1,10 @@
 import Link from "next/link";
 import { QuoteworthyMark } from "./quoteworthy-mark";
-import { BrandDot } from "@/components/brand/brand-dot";
-import { brandColor } from "@/lib/brand-color";
-
-type BrandSummary = {
-  id: string;
-  name: string;
-  slug: string;
-  postCount?: number;
-};
+import { BrandSwitcher, type BrandOption } from "@/components/brand/brand-switcher";
 
 type Props = {
-  brand: BrandSummary | null;
+  brands: BrandOption[];
+  currentBrandId: string | null;
   breadcrumbSection?: string;
   breadcrumbCurrent?: string;
   userInitials?: string;
@@ -19,7 +12,8 @@ type Props = {
 };
 
 export function TopBar({
-  brand,
+  brands,
+  currentBrandId,
   breadcrumbSection,
   breadcrumbCurrent,
   userInitials = "—",
@@ -62,62 +56,7 @@ export function TopBar({
         </span>
       </Link>
 
-      {brand ? (
-        <Link
-          href={`/dashboard?brand=${brand.id}`}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 10,
-            height: 32,
-            padding: "0 10px 0 8px",
-            background: "var(--surface)",
-            border: "1px solid var(--border-subtle)",
-            borderRadius: 6,
-            fontSize: 13,
-            color: "var(--ink)",
-            minWidth: 232,
-          }}
-        >
-          <BrandDot color={brandColor(brand.slug)} />
-          <span
-            style={{
-              flex: 1,
-              minWidth: 0,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              fontWeight: 500,
-            }}
-          >
-            {brand.name}
-          </span>
-          {typeof brand.postCount === "number" && (
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                color: "var(--ink-faint)",
-                marginLeft: 2,
-              }}
-            >
-              {brand.postCount} posts
-            </span>
-          )}
-          <span
-            aria-hidden
-            style={{
-              color: "var(--ink-faint)",
-              fontSize: 10,
-              lineHeight: 1,
-            }}
-          >
-            ▾
-          </span>
-        </Link>
-      ) : (
-        <div />
-      )}
+      <BrandSwitcher brands={brands} currentBrandId={currentBrandId} />
 
       <nav
         style={{
