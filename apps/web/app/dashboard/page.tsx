@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { TopBar } from "@/components/shell/top-bar";
+import { BrandDot } from "@/components/brand/brand-dot";
+import { brandColor } from "@/lib/brand-color";
 import { signout } from "./actions";
 
 type PageProps = {
@@ -29,113 +32,353 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     .order("created_at", { ascending: false });
 
   const list = brands ?? [];
+  const userInitials = makeInitials(account?.display_name ?? user.email ?? "");
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Quoteworthy</h1>
-          <p className="text-xs text-slate-500">
-            {account?.display_name ?? user.email}
-            {" · "}
-            <span className="text-emerald-400">
-              {account?.plan_tier ?? "trial"}
-            </span>
-          </p>
-        </div>
-        <form action={signout}>
-          <button className="text-sm text-slate-400 hover:text-white">
-            Sign out
-          </button>
-        </form>
-      </header>
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <TopBar
+        brand={null}
+        breadcrumbSection="Brands"
+        userInitials={userInitials}
+      />
 
-      <section className="max-w-5xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-6">
+      <section
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "40px 32px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            marginBottom: 28,
+          }}
+        >
           <div>
-            <h2 className="text-2xl font-semibold">Your brands</h2>
-            <p className="text-sm text-slate-400 mt-1">
-              {list.length === 0
-                ? "Add a brand to start generating posts."
-                : `${list.length} brand${list.length === 1 ? "" : "s"}.`}
+            <h1
+              style={{
+                fontSize: 32,
+                fontWeight: 600,
+                letterSpacing: "-0.022em",
+                color: "var(--ink)",
+                margin: 0,
+              }}
+            >
+              Your brands
+            </h1>
+            <p
+              style={{
+                marginTop: 8,
+                fontSize: 14,
+                color: "var(--ink-muted)",
+              }}
+            >
+              {account?.display_name ?? user.email}
+              {" · "}
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--ink-faint)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                {account?.plan_tier ?? "trial"}
+              </span>
+              {" · "}
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--ink-faint)",
+                }}
+              >
+                {list.length} brand{list.length === 1 ? "" : "s"}
+              </span>
             </p>
           </div>
-          <Link
-            href="/brands/new"
-            className="rounded bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 transition-colors"
-          >
-            + Add brand
-          </Link>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <form action={signout}>
+              <button
+                type="submit"
+                style={{
+                  height: 32,
+                  padding: "0 12px",
+                  background: "transparent",
+                  border: "1px solid transparent",
+                  borderRadius: 6,
+                  color: "var(--ink-muted)",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                Sign out
+              </button>
+            </form>
+            <Link
+              href="/brands/new"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                height: 32,
+                padding: "0 14px",
+                background: "var(--ink)",
+                color: "var(--bg)",
+                border: "1px solid var(--ink)",
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: 500,
+              }}
+            >
+              + Add brand
+            </Link>
+          </div>
         </div>
 
         {list.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-slate-700 p-10 text-center">
-            <p className="text-slate-300 mb-2">No brands yet.</p>
-            <p className="text-sm text-slate-500 mb-6">
-              The brand wizard collects voice, tone, customer language and SEO
-              topics. Takes ~3 minutes.
-            </p>
-            <Link
-              href="/brands/new"
-              className="inline-block rounded bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 transition-colors"
-            >
-              Create your first brand
-            </Link>
-          </div>
+          <EmptyState />
         ) : (
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {list.map((b) => {
-              const isNew = highlightId === b.id;
-              return (
-                <li
-                  key={b.id}
-                  className={`rounded-lg border p-5 transition-colors ${
-                    isNew
-                      ? "border-emerald-500 bg-emerald-950/20"
-                      : "border-slate-800 hover:border-slate-700"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div>
-                      <h3 className="font-semibold text-white">{b.name}</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {b.industry ? `${b.industry} · ` : ""}
-                        {b.primary_language.toUpperCase()}
-                      </p>
-                    </div>
-                    {isNew && (
-                      <span className="text-[10px] uppercase tracking-wider text-emerald-400 border border-emerald-700 px-2 py-0.5 rounded">
-                        New
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 mt-4">
-                    <Link
-                      href={`/writer?brand=${b.id}`}
-                      className="text-sm rounded bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 transition-colors"
-                    >
-                      Writer →
-                    </Link>
-                    <span
-                      className="text-xs text-slate-600 cursor-not-allowed"
-                      title="Sprint 1A next block"
-                    >
-                      Posts (soon)
-                    </span>
-                    <span
-                      className="text-xs text-slate-600 cursor-not-allowed"
-                      title="Sprint 1A next block"
-                    >
-                      Settings (soon)
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
+          <ul
+            style={{
+              listStyle: "none",
+              padding: 0,
+              margin: 0,
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+              gap: 16,
+            }}
+          >
+            {list.map((b) => (
+              <BrandCard
+                key={b.id}
+                brand={b}
+                isNew={highlightId === b.id}
+              />
+            ))}
           </ul>
         )}
       </section>
-    </main>
+    </div>
   );
+}
+
+function BrandCard({
+  brand,
+  isNew,
+}: {
+  brand: {
+    id: string;
+    name: string;
+    slug: string;
+    industry: string | null;
+    primary_language: string;
+  };
+  isNew: boolean;
+}) {
+  const color = brandColor(brand.slug);
+  return (
+    <li
+      style={{
+        position: "relative",
+        background: "var(--surface)",
+        border: `1px solid ${isNew ? "var(--pass)" : "var(--border-subtle)"}`,
+        borderRadius: 10,
+        padding: 20,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 0,
+          height: 2,
+          background: color,
+        }}
+      />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <BrandDot color={color} size={10} />
+          <h3
+            style={{
+              fontSize: 15,
+              fontWeight: 600,
+              color: "var(--ink)",
+              margin: 0,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {brand.name}
+          </h3>
+        </div>
+        {isNew && (
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              color: "var(--pass)",
+              border: "1px solid rgba(122,160,121,0.30)",
+              background: "var(--pass-bg)",
+              padding: "2px 8px",
+              borderRadius: 4,
+            }}
+          >
+            New
+          </span>
+        )}
+      </div>
+
+      <p
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          color: "var(--ink-faint)",
+          textTransform: "uppercase",
+          letterSpacing: "0.12em",
+          margin: 0,
+          marginBottom: 20,
+        }}
+      >
+        {brand.industry ? `${brand.industry} · ` : ""}
+        {brand.primary_language.toUpperCase()}
+      </p>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+          paddingTop: 14,
+          borderTop: "1px solid var(--border-subtle)",
+        }}
+      >
+        <Link
+          href={`/writer?brand=${brand.id}`}
+          style={{
+            height: 28,
+            padding: "0 10px",
+            background: "var(--raised)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: 6,
+            fontSize: 13,
+            fontWeight: 500,
+            color: "var(--ink)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          Writer →
+        </Link>
+        <span
+          title="Posts list — Sprint 1A next"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--ink-faint)",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            cursor: "not-allowed",
+          }}
+        >
+          Posts · soon
+        </span>
+        <span
+          title="Settings — Sprint 1B"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--ink-faint)",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            cursor: "not-allowed",
+          }}
+        >
+          Settings · soon
+        </span>
+      </div>
+    </li>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div
+      style={{
+        background: "var(--surface)",
+        border: "1px dashed var(--border-strong)",
+        borderRadius: 14,
+        padding: "48px 32px",
+        textAlign: "center",
+      }}
+    >
+      <p
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontStyle: "italic",
+          fontSize: 28,
+          color: "var(--ink-muted)",
+          margin: 0,
+          marginBottom: 8,
+          letterSpacing: "-0.02em",
+        }}
+      >
+        No brands yet.
+      </p>
+      <p
+        style={{
+          fontSize: 14,
+          color: "var(--ink-muted)",
+          margin: "0 0 24px",
+          maxWidth: 440,
+          marginInline: "auto",
+        }}
+      >
+        The brand wizard collects voice, tone, customer language and SEO topics.
+        Takes about 3 minutes.
+      </p>
+      <Link
+        href="/brands/new"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          height: 36,
+          padding: "0 16px",
+          background: "var(--ink)",
+          color: "var(--bg)",
+          border: "1px solid var(--ink)",
+          borderRadius: 6,
+          fontSize: 14,
+          fontWeight: 500,
+        }}
+      >
+        Create your first brand
+      </Link>
+    </div>
+  );
+}
+
+function makeInitials(name: string): string {
+  if (!name) return "—";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2);
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }

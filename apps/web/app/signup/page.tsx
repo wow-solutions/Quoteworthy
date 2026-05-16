@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { QuoteworthyMark } from "@/components/shell/quoteworthy-mark";
 import { signup } from "./actions";
 
 type PageProps = {
@@ -9,103 +13,161 @@ export default async function SignupPage({ searchParams }: PageProps) {
   const { error } = await searchParams;
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-semibold text-white mb-1">
-          Create your Quoteworthy account
+    <main
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--bg)",
+        padding: "24px 16px",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 28,
+          }}
+        >
+          <QuoteworthyMark size={32} />
+          <span
+            style={{
+              fontSize: 16,
+              fontWeight: 600,
+              letterSpacing: "-0.015em",
+              color: "var(--ink)",
+            }}
+          >
+            Quoteworthy
+          </span>
+        </div>
+
+        <h1
+          style={{
+            fontSize: 24,
+            fontWeight: 600,
+            letterSpacing: "-0.018em",
+            color: "var(--ink)",
+            margin: 0,
+            marginBottom: 6,
+          }}
+        >
+          Create your account
         </h1>
-        <p className="text-sm text-slate-400 mb-6">
+        <p
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontStyle: "italic",
+            fontSize: 15,
+            color: "var(--ink-muted)",
+            margin: 0,
+            marginBottom: 24,
+          }}
+        >
           14-day trial. No card required.
         </p>
 
         {error && (
-          <div className="mb-4 rounded border border-red-700 bg-red-950/50 px-3 py-2 text-sm text-red-200">
+          <div
+            style={{
+              marginBottom: 16,
+              padding: "10px 12px",
+              borderRadius: 6,
+              background: "var(--risky-bg)",
+              color: "var(--risky)",
+              border: "1px solid rgba(194,104,90,0.20)",
+              fontSize: 13,
+              lineHeight: 1.5,
+            }}
+          >
             {error}
           </div>
         )}
 
-        <form action={signup} className="space-y-4">
-          <div>
-            <label
-              htmlFor="display_name"
-              className="block text-sm font-medium text-slate-300 mb-1"
-            >
-              Your name <span className="text-slate-500">(optional)</span>
-            </label>
-            <input
+        <form action={signup} style={{ display: "grid", gap: 14 }}>
+          <Field
+            id="display_name"
+            label="Your name"
+            hint="optional"
+          >
+            <Input
               id="display_name"
               name="display_name"
               type="text"
               autoComplete="name"
-              className="w-full rounded bg-slate-900 border border-slate-700 px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
             />
-          </div>
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-slate-300 mb-1"
-            >
-              Email
-            </label>
-            <input
+          </Field>
+          <Field id="email" label="Email">
+            <Input
               id="email"
               name="email"
               type="email"
               required
               autoComplete="email"
-              className="w-full rounded bg-slate-900 border border-slate-700 px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
             />
-          </div>
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-slate-300 mb-1"
-            >
-              Password
-            </label>
-            <input
+          </Field>
+          <Field id="password" label="Password" hint="≥ 8 characters">
+            <Input
               id="password"
               name="password"
               type="password"
               required
               minLength={8}
               autoComplete="new-password"
-              className="w-full rounded bg-slate-900 border border-slate-700 px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
             />
-            <p className="text-xs text-slate-500 mt-1">
-              At least 8 characters.
-            </p>
-          </div>
-          <button
-            type="submit"
-            className="w-full rounded bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 transition-colors"
-          >
+          </Field>
+          <Button type="submit" className="w-full mt-2 h-9">
             Create account
-          </button>
+          </Button>
         </form>
 
-        <p className="text-sm text-slate-400 mt-6 text-center">
+        <p
+          style={{
+            fontSize: 13,
+            color: "var(--ink-muted)",
+            marginTop: 24,
+            textAlign: "center",
+          }}
+        >
           Already have an account?{" "}
           <Link
             href="/login"
-            className="text-emerald-400 hover:text-emerald-300"
+            style={{ color: "var(--info)", textDecoration: "none" }}
           >
             Log in
           </Link>
         </p>
 
-        <p className="text-xs text-slate-500 mt-8 text-center">
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--ink-faint)",
+            marginTop: 32,
+            textAlign: "center",
+            letterSpacing: "0.04em",
+          }}
+        >
           By signing up you agree to our{" "}
           <a
             href="https://github.com/wow-solutions/Quoteworthy/blob/main/docs/terms.md"
-            className="underline hover:text-slate-400"
+            style={{
+              color: "var(--ink-muted)",
+              textDecoration: "underline",
+            }}
           >
             Terms
           </a>{" "}
           and{" "}
           <a
             href="https://github.com/wow-solutions/Quoteworthy/blob/main/docs/privacy.md"
-            className="underline hover:text-slate-400"
+            style={{
+              color: "var(--ink-muted)",
+              textDecoration: "underline",
+            }}
           >
             Privacy Policy
           </a>
@@ -113,5 +175,46 @@ export default async function SignupPage({ searchParams }: PageProps) {
         </p>
       </div>
     </main>
+  );
+}
+
+function Field({
+  id,
+  label,
+  hint,
+  children,
+}: {
+  id: string;
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <Label
+        htmlFor={id}
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 6,
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          fontWeight: 500,
+          color: "var(--ink-faint)",
+          textTransform: "uppercase",
+          letterSpacing: "0.12em",
+          marginBottom: 6,
+        }}
+      >
+        <span>{label}</span>
+        {hint && (
+          <span style={{ color: "var(--ink-faint)", textTransform: "none", letterSpacing: 0 }}>
+            {hint}
+          </span>
+        )}
+      </Label>
+      {children}
+    </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import type { PangramResponse } from "@/lib/pangram";
+import { DetectionGauge } from "@/components/detection/detection-gauge";
+import { scoreBucket, bucketCssVar } from "@/lib/detection";
 import { saveDraft } from "./actions";
 
 type GenerateResponse = {
@@ -27,10 +29,17 @@ const LINKEDIN_MAX = 3000;
 type Props = {
   brandId: string;
   brandName: string;
+  brandConfig: {
+    brandVoice: string | null;
+    toneAttributes: string[];
+    forbiddenWords: string[];
+    seoKeywords: string[];
+  };
 };
 
-export function WriterClient({ brandId, brandName }: Props) {
+export function WriterClient({ brandId, brandName, brandConfig }: Props) {
   const [topic, setTopic] = useState("");
+  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [originalContent, setOriginalContent] = useState("");
   const [postId, setPostId] = useState<string | null>(null);
@@ -42,8 +51,20 @@ export function WriterClient({ brandId, brandName }: Props) {
   const [stage, setStage] = useState<Stage>("idle");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [brandContextOpen, setBrandContextOpen] = useState(false);
+
+  const voiceShort = shortenVoice(brandConfig.brandVoice);
+  const toneTop = truncateList(brandConfig.toneAttributes, 4);
+  const avoidTop = truncateList(brandConfig.forbiddenWords, 4);
+  const topicsTop = truncateList(brandConfig.seoKeywords, 4);
+  const hasBrandContext =
+    voiceShort.short !== "—" ||
+    toneTop.shown.length > 0 ||
+    avoidTop.shown.length > 0 ||
+    topicsTop.shown.length > 0;
 
   const charCount = content.length;
+  const overLimit = charCount > LINKEDIN_MAX;
   const busy =
     stage === "generating" || stage === "detecting" || stage === "saving";
   const dirty = postId !== null && content !== originalContent;
@@ -87,7 +108,6 @@ export function WriterClient({ brandId, brandName }: Props) {
       return;
     }
 
-    // Visual second-stage signal while the response was actually awaited above.
     setStage("detecting");
     const data = (await res.json()) as GenerateResponse;
     setContent(data.content);
@@ -97,6 +117,10 @@ export function WriterClient({ brandId, brandName }: Props) {
     setBreakdown(data.detection_breakdown);
     setStatus(data.status);
     setStage("ready");
+    if (!title) {
+      const firstLine = data.content.split("\n").find((l) => l.trim()) ?? "";
+      setTitle(firstLine.slice(0, 80));
+    }
   }
 
   function onSave() {
@@ -115,158 +139,1039 @@ export function WriterClient({ brandId, brandName }: Props) {
     });
   }
 
-  const scoreColor =
-    score === null
-      ? "text-slate-600"
-      : score >= 80
-        ? "text-emerald-400"
-        : score >= 40
-          ? "text-amber-400"
-          : "text-red-400";
+  const generateLabel =
+    stage === "generating"
+      ? "Generating draft… ~5s"
+      : stage === "detecting"
+        ? "Checking detection… ~5s"
+        : postId
+          ? "Regenerate"
+          : "Generate";
 
   return (
-    <section className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
-      <div className="space-y-4">
-        <label className="block">
-          <span className="text-sm text-slate-300">Topic hint (optional)</span>
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder={`e.g. "summer maintenance tips" — or leave blank for ${brandName}`}
-            disabled={busy}
-            className="mt-1 w-full rounded bg-slate-900 border border-slate-700 px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 disabled:opacity-60"
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "var(--writer-left-w) 1fr var(--writer-right-w)",
+        overflow: "hidden",
+        minHeight: 0,
+      }}
+    >
+      {/* LEFT — prompt panel */}
+      <aside
+        style={{
+          borderRight: "1px solid var(--border-subtle)",
+          background: "var(--bg)",
+          display: "flex",
+          flexDirection: "column",
+          overflowY: "auto",
+        }}
+      >
+        <CollapsibleSection
+          title="Brand context"
+          open={brandContextOpen}
+          onToggle={() => setBrandContextOpen((v) => !v)}
+          summary={
+            hasBrandContext
+              ? voiceShort.short !== "—"
+                ? voiceShort.short
+                : toneTop.shown.join(" · ")
+              : "No brand context configured"
+          }
+        >
+          <BrandSummaryRow
+            label="Voice"
+            value={voiceShort.short}
+            title={voiceShort.full ?? undefined}
           />
-        </label>
+          {toneTop.shown.length > 0 && (
+            <BrandSummaryRow
+              label="Tone"
+              value={formatList(toneTop)}
+              title={brandConfig.toneAttributes.join(" · ")}
+            />
+          )}
+          {avoidTop.shown.length > 0 && (
+            <BrandSummaryRow
+              label="Avoid"
+              value={formatList(avoidTop)}
+              title={brandConfig.forbiddenWords.join(" · ")}
+            />
+          )}
+          {topicsTop.shown.length > 0 && (
+            <BrandSummaryRow
+              label="Topics"
+              value={formatList(topicsTop)}
+              valueColor="var(--info)"
+              title={brandConfig.seoKeywords.join(" · ")}
+            />
+          )}
+        </CollapsibleSection>
 
-        <div className="flex items-center gap-3">
+        <Section
+          title="Prompt"
+          right={
+            <span style={mono(11, "var(--ink-faint)")}>
+              {topic.length} / 1000
+            </span>
+          }
+        >
+          <textarea
+            value={topic}
+            onChange={(e) => setTopic(e.target.value.slice(0, 1000))}
+            disabled={busy}
+            rows={5}
+            placeholder={`Topic hint for ${brandName} — or leave blank.`}
+            style={inputBase(true)}
+          />
+        </Section>
+
+        <Section title="Channel">
+          <Segmented
+            options={[
+              { label: "LinkedIn", value: "linkedin", icon: <LinkedInIcon /> },
+              { label: "Blog", value: "blog", disabled: true },
+              { label: "X", value: "x", disabled: true },
+            ]}
+            value="linkedin"
+          />
+          <div style={{ marginTop: 14 }}>
+            <Caption right={`~ 1,200 chars`}>Length</Caption>
+            <Segmented
+              options={[
+                { label: "Short", value: "short", disabled: true },
+                { label: "Medium", value: "medium" },
+                { label: "Long", value: "long", disabled: true },
+              ]}
+              value="medium"
+            />
+          </div>
+        </Section>
+
+        <Section>
           <button
             onClick={onGenerate}
             disabled={busy}
-            className="rounded bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-400 text-white font-medium px-4 py-2 transition-colors"
+            style={primaryButton(busy, 40)}
           >
-            {stage === "generating"
-              ? "Generating draft… ~5s"
-              : stage === "detecting"
-                ? "Checking detection… ~5s"
-                : postId
-                  ? "Regenerate"
-                  : "Generate"}
+            {generateLabel}
           </button>
-
-          {postId && (
-            <button
-              onClick={onSave}
-              disabled={busy || isPending || !dirty}
-              className="rounded border border-slate-700 hover:border-slate-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 font-medium px-4 py-2 transition-colors"
+          {error && (
+            <div
+              style={{
+                marginTop: 10,
+                padding: "8px 10px",
+                borderRadius: 6,
+                background: "var(--risky-bg)",
+                border: "1px solid rgba(194,104,90,0.20)",
+                color: "var(--risky)",
+                fontSize: 12,
+                lineHeight: 1.4,
+              }}
             >
-              {stage === "saving"
-                ? "Saving…"
-                : stage === "saved" && !dirty
-                  ? "Saved"
-                  : "Save edits"}
-            </button>
-          )}
-        </div>
-
-        {error && (
-          <div className="rounded border border-red-700 bg-red-950/50 px-3 py-2 text-sm text-red-200">
-            {error}
-          </div>
-        )}
-
-        <label className="block">
-          <span className="text-sm text-slate-300">Draft</span>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={16}
-            placeholder="Generated draft will appear here…"
-            className="mt-1 w-full rounded bg-slate-900 border border-slate-700 px-3 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 font-mono text-sm"
-          />
-        </label>
-
-        <div className="flex justify-between text-xs text-slate-500">
-          <span>
-            {charCount} / {LINKEDIN_MAX} characters
-            {dirty && (
-              <span className="ml-2 text-amber-400">
-                · edited — score may be stale
-              </span>
-            )}
-          </span>
-          {charCount > LINKEDIN_MAX && (
-            <span className="text-red-400">Exceeds LinkedIn limit</span>
-          )}
-        </div>
-      </div>
-
-      <aside className="space-y-3">
-        <div className="rounded-lg border border-slate-800 p-4">
-          <p className="text-xs uppercase tracking-wider text-slate-500 mb-1">
-            Detection Pass Score
-          </p>
-          <p className={`text-4xl font-semibold ${scoreColor}`}>
-            {score === null ? "—" : score}
-            {score !== null && (
-              <span className="text-lg text-slate-500">/100</span>
-            )}
-          </p>
-          <p className="text-xs text-slate-500 mt-1">
-            Higher = more human-detected by Pangram 3.x.
-          </p>
-        </div>
-
-        {breakdown && (
-          <div className="rounded-lg border border-slate-800 p-4 space-y-2 text-xs">
-            <p className="text-sm font-medium text-white">
-              {breakdown.headline}
-            </p>
-            <p className="text-slate-400">{breakdown.prediction}</p>
-            <div className="pt-2 border-t border-slate-800 grid grid-cols-3 gap-2 text-slate-400">
-              <div>
-                <div className="text-slate-500 text-[10px] uppercase tracking-wider">
-                  AI seg
-                </div>
-                <div className="text-white">{breakdown.num_ai_segments}</div>
-              </div>
-              <div>
-                <div className="text-slate-500 text-[10px] uppercase tracking-wider">
-                  Assisted
-                </div>
-                <div className="text-white">
-                  {breakdown.num_ai_assisted_segments}
-                </div>
-              </div>
-              <div>
-                <div className="text-slate-500 text-[10px] uppercase tracking-wider">
-                  Human
-                </div>
-                <div className="text-white">
-                  {breakdown.num_human_segments}
-                </div>
-              </div>
+              {error}
             </div>
-          </div>
-        )}
-
-        {status && (
-          <div className="rounded-lg border border-slate-800 p-3 text-xs text-slate-400">
-            Saved as{" "}
-            <span className="text-white font-medium">
-              {status === "pending_approval"
-                ? "Pending approval"
-                : "Draft"}
+          )}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 10,
+            }}
+          >
+            <span style={mono(11, "var(--ink-faint)")}>
+              Claude Sonnet 4.6
+              {breakdown && (
+                <>
+                  {" · "}
+                  Pangram v3
+                </>
+              )}
             </span>
           </div>
+        </Section>
+      </aside>
+
+      {/* CENTER — editor */}
+      <main
+        style={{
+          background: "var(--bg)",
+          display: "flex",
+          flexDirection: "column",
+          overflowY: "auto",
+          minWidth: 0,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            padding: "14px 32px",
+            borderBottom: "1px solid var(--border-subtle)",
+            height: 56,
+            flexShrink: 0,
+          }}
+        >
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Untitled post"
+            style={{
+              flex: 1,
+              background: "transparent",
+              border: 0,
+              outline: "none",
+              fontFamily: "var(--font-sans)",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "var(--ink)",
+              letterSpacing: "-0.01em",
+              padding: 0,
+              minWidth: 0,
+            }}
+          />
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <Badge variant="neutral">LINKEDIN</Badge>
+            <span style={mono(12, overLimit ? "var(--risky)" : "var(--ink-faint)")}>
+              {charCount} / {LINKEDIN_MAX} CHARS
+            </span>
+            {dirty && (
+              <span style={mono(12, "var(--borderline)")}>UNSAVED</span>
+            )}
+          </div>
+        </div>
+
+        <Toolbar />
+
+        <div
+          style={{
+            flex: 1,
+            padding: "32px 32px 24px",
+            overflowY: "auto",
+            minHeight: 0,
+          }}
+        >
+          <div style={{ maxWidth: "var(--editor-max-w)", margin: "0 auto" }}>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={20}
+              placeholder="Generated draft will appear here…"
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: 0,
+                outline: "none",
+                resize: "vertical",
+                fontFamily: "var(--font-sans)",
+                fontSize: 16,
+                lineHeight: 1.65,
+                color: "var(--ink)",
+                letterSpacing: "-0.005em",
+                minHeight: 400,
+              }}
+            />
+          </div>
+        </div>
+
+        <footer
+          style={{
+            borderTop: "1px solid var(--border-subtle)",
+            padding: "12px 32px",
+            display: "flex",
+            gap: 10,
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <span style={mono(11, "var(--ink-faint)")}>
+              {status === null
+                ? "NOT SAVED"
+                : stage === "saving"
+                  ? "SAVING…"
+                  : dirty
+                    ? "EDITED · unsaved"
+                    : "SAVED"}
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {postId && (
+              <button
+                onClick={onSave}
+                disabled={busy || isPending || !dirty}
+                style={secondaryButton(busy || isPending || !dirty)}
+              >
+                {stage === "saved" && !dirty ? "Saved" : "Save draft"}
+              </button>
+            )}
+            <button
+              style={primaryButton(true, 32)}
+              disabled
+              title="Sprint 1B — approval flow"
+            >
+              Approve →
+            </button>
+          </div>
+        </footer>
+      </main>
+
+      {/* RIGHT — Detection Pass panel */}
+      <aside
+        style={{
+          borderLeft: "1px solid var(--border-subtle)",
+          background: "var(--bg)",
+          display: "flex",
+          flexDirection: "column",
+          overflowY: "auto",
+        }}
+      >
+        <div
+          style={{
+            padding: "24px 20px 12px",
+            textAlign: "center",
+            borderBottom: "1px solid var(--border-subtle)",
+          }}
+        >
+          <div
+            style={{
+              ...caption(),
+              marginBottom: 8,
+            }}
+          >
+            Detection Pass Score
+          </div>
+          <div style={{ display: "grid", placeItems: "center" }}>
+            <DetectionGauge score={score} size="md" />
+          </div>
+          <div
+            style={{
+              marginTop: 8,
+              ...mono(11, "var(--ink-faint)"),
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+            }}
+          >
+            {score === null
+              ? "Run Generate to score"
+              : `Pangram · last run just now`}
+          </div>
+        </div>
+
+        <Section title="Per-detector" right={<span style={mono(10, "var(--ink-faint)")}>AI prob · lower = better</span>}>
+          <DetectorRow
+            name="Pangram"
+            sub="v3 · weight 1.0"
+            score={breakdown ? breakdown.fraction_ai : null}
+          />
+          <DetectorRow
+            name="GPTZero"
+            sub="not configured"
+            score={null}
+            faded
+          />
+          <DetectorRow
+            name="Originality.ai"
+            sub="not configured"
+            score={null}
+            faded
+          />
+        </Section>
+
+        {breakdown && (
+          <Section title="Pangram breakdown">
+            <div
+              style={{
+                fontSize: 13,
+                color: "var(--ink-muted)",
+                lineHeight: 1.5,
+                marginBottom: 10,
+              }}
+            >
+              {breakdown.headline}
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: 10,
+              }}
+            >
+              <Stat label="AI seg" value={breakdown.num_ai_segments} />
+              <Stat label="Assisted" value={breakdown.num_ai_assisted_segments} />
+              <Stat label="Human" value={breakdown.num_human_segments} />
+            </div>
+          </Section>
         )}
 
-        <div className="rounded-lg border border-amber-700 bg-amber-950/40 p-3 text-xs text-amber-200">
-          <strong className="block mb-1">Humanizer = Sprint 2</strong>
-          Raw Claude output reliably scores low. Adversarial humanizer loop
-          ships next sprint.
-        </div>
+        <Section title="Flagged spans" right={<span style={mono(11, "var(--ink-faint)")}>0</span>}>
+          <div
+            style={{
+              ...mono(12, "var(--ink-faint)"),
+              padding: "16px 4px",
+              textAlign: "center",
+              letterSpacing: "0.06em",
+            }}
+          >
+            INLINE FLAGGING · SPRINT 2
+          </div>
+        </Section>
+
+        <Section title="Run history" right={<span style={mono(11, "var(--ink-faint)")}>1</span>}>
+          {score !== null ? (
+            <HistoryRow
+              when="just now · first gen"
+              score={score}
+              isLatest
+            />
+          ) : (
+            <div
+              style={{
+                ...mono(12, "var(--ink-faint)"),
+                padding: "12px 4px",
+                letterSpacing: "0.06em",
+              }}
+            >
+              NO RUNS YET
+            </div>
+          )}
+        </Section>
+
+        <Section>
+          <button
+            disabled
+            style={secondaryButton(true, 40)}
+            title="Sprint 2 — adversarial humanizer"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              style={{ marginRight: 6 }}
+            >
+              <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+              <path d="M21 3v5h-5" />
+            </svg>
+            Re-humanize · Sprint 2
+          </button>
+        </Section>
       </aside>
+    </div>
+  );
+}
+
+/* ─── tiny inline primitives, kept here для скорости ───────────────────── */
+
+function Section({
+  title,
+  right,
+  children,
+}: {
+  title?: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      style={{
+        padding: "18px 20px",
+        borderBottom: "1px solid var(--border-subtle)",
+      }}
+    >
+      {title && (
+        <Caption right={right}>{title}</Caption>
+      )}
+      {children}
     </section>
   );
+}
+
+function CollapsibleSection({
+  title,
+  open,
+  onToggle,
+  summary,
+  children,
+}: {
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  summary?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      style={{
+        padding: "14px 20px",
+        borderBottom: "1px solid var(--border-subtle)",
+      }}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        style={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 10,
+          background: "transparent",
+          border: 0,
+          padding: 0,
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        <span style={caption()}>{title}</span>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            color: "var(--ink-faint)",
+          }}
+        >
+          {!open && summary && (
+            <span
+              style={{
+                fontSize: 11,
+                color: "var(--ink-faint)",
+                maxWidth: 160,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {summary}
+            </span>
+          )}
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              transform: open ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 200ms cubic-bezier(0.16,1,0.3,1)",
+            }}
+            aria-hidden
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </span>
+      </button>
+      {open && <div style={{ marginTop: 12 }}>{children}</div>}
+    </section>
+  );
+}
+
+function Caption({
+  children,
+  right,
+}: {
+  children: React.ReactNode;
+  right?: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 12,
+      }}
+    >
+      <span style={caption()}>{children}</span>
+      {right}
+    </div>
+  );
+}
+
+function BrandSummaryRow({
+  label,
+  value,
+  valueColor,
+  title,
+}: {
+  label: string;
+  value: string;
+  valueColor?: string;
+  title?: string;
+}) {
+  return (
+    <div style={{ display: "flex", gap: 12, padding: "6px 0" }}>
+      <span
+        style={{
+          ...mono(11, "var(--ink-faint)"),
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          minWidth: 64,
+          paddingTop: 2,
+          fontWeight: 500,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        title={title}
+        style={{
+          flex: 1,
+          fontSize: 13,
+          color: valueColor ?? "var(--ink)",
+          lineHeight: 1.55,
+          minWidth: 0,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function Segmented<T extends string>({
+  options,
+  value,
+}: {
+  options: { label: string; value: T; icon?: React.ReactNode; disabled?: boolean }[];
+  value: T;
+}) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridAutoFlow: "column",
+        gridAutoColumns: "1fr",
+        gap: 0,
+        background: "var(--surface)",
+        border: "1px solid var(--border-strong)",
+        borderRadius: 6,
+        padding: 2,
+      }}
+    >
+      {options.map((opt) => {
+        const active = opt.value === value;
+        return (
+          <button
+            key={opt.value}
+            disabled={opt.disabled}
+            style={{
+              height: 26,
+              background: active ? "var(--raised)" : "transparent",
+              border: 0,
+              color: active
+                ? "var(--ink)"
+                : opt.disabled
+                  ? "var(--ink-faint)"
+                  : "var(--ink-muted)",
+              fontSize: 12,
+              fontWeight: 500,
+              borderRadius: 4,
+              cursor: opt.disabled ? "not-allowed" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 4,
+              opacity: opt.disabled ? 0.55 : 1,
+            }}
+          >
+            {opt.icon}
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Badge({
+  variant,
+  children,
+}: {
+  variant: "neutral" | "pass" | "borderline" | "risky";
+  children: React.ReactNode;
+}) {
+  const styles: Record<string, React.CSSProperties> = {
+    neutral: {
+      background: "var(--raised)",
+      color: "var(--ink-muted)",
+      borderColor: "var(--border-subtle)",
+    },
+    pass: {
+      background: "var(--pass-bg)",
+      color: "var(--pass)",
+      borderColor: "rgba(122,160,121,0.20)",
+    },
+    borderline: {
+      background: "var(--borderline-bg)",
+      color: "var(--borderline)",
+      borderColor: "rgba(201,166,107,0.20)",
+    },
+    risky: {
+      background: "var(--risky-bg)",
+      color: "var(--risky)",
+      borderColor: "rgba(194,104,90,0.20)",
+    },
+  };
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        height: 22,
+        padding: "0 8px",
+        borderRadius: 4,
+        fontFamily: "var(--font-mono)",
+        fontSize: 12,
+        fontWeight: 500,
+        letterSpacing: "0.02em",
+        border: "1px solid",
+        ...styles[variant],
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Toolbar() {
+  const Btn = ({ title }: { title: string }) => (
+    <button
+      title={title}
+      disabled
+      style={{
+        width: 28,
+        height: 28,
+        display: "grid",
+        placeItems: "center",
+        background: "transparent",
+        border: 0,
+        borderRadius: 4,
+        color: "var(--ink-faint)",
+        cursor: "not-allowed",
+      }}
+    >
+      <span style={{ fontSize: 11, fontFamily: "var(--font-mono)" }}>
+        {title.slice(0, 1)}
+      </span>
+    </button>
+  );
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 2,
+        padding: "6px 24px",
+        borderBottom: "1px solid var(--border-subtle)",
+        flexShrink: 0,
+      }}
+    >
+      <Btn title="Heading" />
+      <Btn title="Bold" />
+      <Btn title="Italic" />
+      <Btn title="Quote" />
+      <div
+        style={{
+          width: 1,
+          background: "var(--border-subtle)",
+          margin: "6px 8px",
+          height: 16,
+          alignSelf: "center",
+        }}
+      />
+      <Btn title="List" />
+      <Btn title="Link" />
+      <div style={{ flex: 1 }} />
+      <span
+        style={{
+          ...mono(11, "var(--ink-faint)"),
+          alignSelf: "center",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        Tiptap · Sprint 2
+      </span>
+    </div>
+  );
+}
+
+function DetectorRow({
+  name,
+  sub,
+  score,
+  faded,
+}: {
+  name: string;
+  sub: string;
+  score: number | null;
+  faded?: boolean;
+}) {
+  const fraction = score === null ? 0 : Math.max(0, Math.min(1, score));
+  const bucket = score === null ? "risky" : scoreBucket(100 * (1 - fraction));
+  const color = score === null ? "var(--ink-faint)" : bucketCssVar(bucket);
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr auto",
+        alignItems: "center",
+        gap: 10,
+        padding: "8px 0",
+        opacity: faded ? 0.55 : 1,
+      }}
+    >
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>
+          {name}
+        </div>
+        <div
+          style={{
+            ...mono(10, "var(--ink-faint)"),
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            marginTop: 2,
+          }}
+        >
+          {sub}
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div
+          style={{
+            width: 80,
+            height: 4,
+            background: "var(--raised)",
+            borderRadius: 999,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              width: `${fraction * 100}%`,
+              height: "100%",
+              background: color,
+              borderRadius: 999,
+              transition: "width 600ms cubic-bezier(0.16,1,0.3,1)",
+            }}
+          />
+        </div>
+        <span
+          style={{
+            ...mono(12, "var(--ink)"),
+            minWidth: 32,
+            textAlign: "right",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {score === null ? "—" : fraction.toFixed(2)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function HistoryRow({
+  when,
+  score,
+  isLatest,
+}: {
+  when: string;
+  score: number;
+  isLatest?: boolean;
+}) {
+  const bucket = scoreBucket(score);
+  const color = bucketCssVar(bucket);
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "12px 1fr auto",
+        gap: 10,
+        alignItems: "center",
+        padding: "10px 0",
+      }}
+    >
+      <span
+        style={{
+          width: 8,
+          height: 8,
+          borderRadius: "50%",
+          background: color,
+          ...(isLatest ? { boxShadow: "0 0 0 2px var(--bg)" } : {}),
+        }}
+      />
+      <span style={mono(11, "var(--ink-faint)")}>{when}</span>
+      <span
+        style={{
+          ...mono(13, color),
+          fontWeight: 500,
+        }}
+      >
+        {score}
+      </span>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div
+        style={{
+          ...mono(10, "var(--ink-faint)"),
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          ...mono(15, "var(--ink)"),
+          fontVariantNumeric: "tabular-nums",
+          fontWeight: 500,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function LinkedInIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20.4 3H3.6C3.3 3 3 3.3 3 3.6v16.8c0 .3.3.6.6.6h16.8c.3 0 .6-.3.6-.6V3.6c0-.3-.3-.6-.6-.6ZM8.3 18.3H5.6V9.7h2.7v8.6Zm-1.3-9.8a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2Zm11.4 9.8h-2.7v-4.2c0-1 0-2.3-1.4-2.3s-1.6 1.1-1.6 2.2v4.3h-2.7V9.7h2.6V11h0a2.8 2.8 0 0 1 2.6-1.4c2.7 0 3.2 1.8 3.2 4.1v4.6Z" />
+    </svg>
+  );
+}
+
+/* ─── style helpers ───────────────────────────────────────────────────── */
+
+function caption(): React.CSSProperties {
+  return {
+    fontFamily: "var(--font-mono)",
+    fontSize: 11,
+    fontWeight: 500,
+    color: "var(--ink-faint)",
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+  };
+}
+
+function mono(size: number, color: string): React.CSSProperties {
+  return {
+    fontFamily: "var(--font-mono)",
+    fontSize: size,
+    color,
+    letterSpacing: "0.02em",
+    fontVariantNumeric: "tabular-nums",
+  };
+}
+
+function inputBase(isTextarea: boolean): React.CSSProperties {
+  return {
+    display: "block",
+    width: "100%",
+    minHeight: isTextarea ? 88 : undefined,
+    padding: isTextarea ? 10 : "0 10px",
+    background: "var(--surface)",
+    border: "1px solid var(--border-strong)",
+    borderRadius: 6,
+    color: "var(--ink)",
+    fontFamily: "inherit",
+    fontSize: 13,
+    lineHeight: 1.5,
+    resize: isTextarea ? "vertical" : "none",
+    outline: "none",
+  };
+}
+
+function primaryButton(disabled: boolean, height: number): React.CSSProperties {
+  return {
+    width: "100%",
+    height,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    padding: "0 12px",
+    borderRadius: 6,
+    fontSize: height >= 40 ? 14 : 13,
+    fontWeight: 500,
+    border: "1px solid var(--ink)",
+    background: "var(--ink)",
+    color: "var(--bg)",
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.5 : 1,
+    transition: "opacity 120ms",
+  };
+}
+
+function secondaryButton(
+  disabled: boolean,
+  height: number = 32,
+): React.CSSProperties {
+  return {
+    width: height >= 40 ? "100%" : "auto",
+    height,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    padding: "0 12px",
+    borderRadius: 6,
+    fontSize: 13,
+    fontWeight: 500,
+    border: "1px solid var(--border-strong)",
+    background: "var(--surface)",
+    color: "var(--ink)",
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.5 : 1,
+  };
+}
+
+/* ─── content truncation helpers ──────────────────────────────────────── */
+
+function shortenVoice(voice: string | null): {
+  short: string;
+  full: string | null;
+} {
+  if (!voice || !voice.trim()) return { short: "—", full: null };
+  const trimmed = voice.trim();
+  const firstSentence = trimmed.split(/(?<=[.!?])\s+/)[0] ?? trimmed;
+  if (firstSentence.length <= 140) {
+    return {
+      short: firstSentence + (firstSentence === trimmed ? "" : "…"),
+      full: trimmed,
+    };
+  }
+  return { short: firstSentence.slice(0, 137).trimEnd() + "…", full: trimmed };
+}
+
+function truncateList(
+  items: string[],
+  max: number,
+): { shown: string[]; rest: number } {
+  if (items.length <= max) return { shown: items, rest: 0 };
+  return { shown: items.slice(0, max), rest: items.length - max };
+}
+
+function formatList(t: { shown: string[]; rest: number }): string {
+  const base = t.shown.join(" · ");
+  return t.rest > 0 ? `${base} · +${t.rest} more` : base;
 }

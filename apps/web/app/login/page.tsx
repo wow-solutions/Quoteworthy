@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { QuoteworthyMark } from "@/components/shell/quoteworthy-mark";
 import { login } from "./actions";
 
 type PageProps = {
@@ -9,77 +13,173 @@ export default async function LoginPage({ searchParams }: PageProps) {
   const { error, message } = await searchParams;
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-semibold text-white mb-1">
-          Log in to Quoteworthy
+    <main
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--bg)",
+        padding: "24px 16px",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 28,
+          }}
+        >
+          <QuoteworthyMark size={32} />
+          <span
+            style={{
+              fontSize: 16,
+              fontWeight: 600,
+              letterSpacing: "-0.015em",
+              color: "var(--ink)",
+            }}
+          >
+            Quoteworthy
+          </span>
+        </div>
+
+        <h1
+          style={{
+            fontSize: 24,
+            fontWeight: 600,
+            letterSpacing: "-0.018em",
+            color: "var(--ink)",
+            margin: 0,
+            marginBottom: 6,
+          }}
+        >
+          Log in
         </h1>
-        <p className="text-sm text-slate-400 mb-6">
+        <p
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontStyle: "italic",
+            fontSize: 15,
+            color: "var(--ink-muted)",
+            margin: 0,
+            marginBottom: 24,
+          }}
+        >
           Content AI wants to quote.
         </p>
 
-        {message && (
-          <div className="mb-4 rounded border border-emerald-700 bg-emerald-950/50 px-3 py-2 text-sm text-emerald-200">
-            {message}
-          </div>
-        )}
-        {error && (
-          <div className="mb-4 rounded border border-red-700 bg-red-950/50 px-3 py-2 text-sm text-red-200">
-            {error}
-          </div>
-        )}
+        {message && <Banner kind="pass">{message}</Banner>}
+        {error && <Banner kind="risky">{error}</Banner>}
 
-        <form action={login} className="space-y-4">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-slate-300 mb-1"
-            >
-              Email
-            </label>
-            <input
+        <form action={login} style={{ display: "grid", gap: 14 }}>
+          <Field id="email" label="Email">
+            <Input
               id="email"
               name="email"
               type="email"
               required
               autoComplete="email"
-              className="w-full rounded bg-slate-900 border border-slate-700 px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
             />
-          </div>
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-slate-300 mb-1"
-            >
-              Password
-            </label>
-            <input
+          </Field>
+          <Field id="password" label="Password">
+            <Input
               id="password"
               name="password"
               type="password"
               required
               autoComplete="current-password"
-              className="w-full rounded bg-slate-900 border border-slate-700 px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
             />
-          </div>
-          <button
-            type="submit"
-            className="w-full rounded bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 transition-colors"
-          >
+          </Field>
+          <Button type="submit" className="w-full mt-2 h-9">
             Log in
-          </button>
+          </Button>
         </form>
 
-        <p className="text-sm text-slate-400 mt-6 text-center">
+        <p
+          style={{
+            fontSize: 13,
+            color: "var(--ink-muted)",
+            marginTop: 24,
+            textAlign: "center",
+          }}
+        >
           No account?{" "}
           <Link
             href="/signup"
-            className="text-emerald-400 hover:text-emerald-300"
+            style={{ color: "var(--info)", textDecoration: "none" }}
           >
             Sign up
           </Link>
         </p>
       </div>
     </main>
+  );
+}
+
+function Field({
+  id,
+  label,
+  children,
+}: {
+  id: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <Label
+        htmlFor={id}
+        style={{
+          display: "block",
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          fontWeight: 500,
+          color: "var(--ink-faint)",
+          textTransform: "uppercase",
+          letterSpacing: "0.12em",
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
+}
+
+function Banner({
+  kind,
+  children,
+}: {
+  kind: "pass" | "risky";
+  children: React.ReactNode;
+}) {
+  const styles =
+    kind === "pass"
+      ? {
+          background: "var(--pass-bg)",
+          color: "var(--pass)",
+          border: "1px solid rgba(122,160,121,0.20)",
+        }
+      : {
+          background: "var(--risky-bg)",
+          color: "var(--risky)",
+          border: "1px solid rgba(194,104,90,0.20)",
+        };
+  return (
+    <div
+      style={{
+        marginBottom: 16,
+        padding: "10px 12px",
+        borderRadius: 6,
+        fontSize: 13,
+        lineHeight: 1.5,
+        ...styles,
+      }}
+    >
+      {children}
+    </div>
   );
 }
