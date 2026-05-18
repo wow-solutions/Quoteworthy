@@ -202,27 +202,68 @@ export async function fetchUserInfo(accessToken: string): Promise<UserInfo> {
 // ════════════════════════════════════════════════════════════════════
 // State helpers (CSRF protection + brand_id passthrough)
 //
-// State payload: base64url JSON { nonce, brand_id }.
-// The nonce is mirrored into a httpOnly cookie at /request; /callback compares.
-// brand_id rides in the payload because the cookie can't reach the LinkedIn
-// redirect — but the cookie still gates the whole flow.
+// State token = base64url(JSON{brand_id, ts}).hmac-sha256-base64url
+// Stateless: the signature itself proves the state was issued by us. No
+// cookie needed — Vercel serverless functions don't reliably share cookies
+// between /request and /callback across cold starts and regions.
+//
+// Replay protection: ts is checked against STATE_MAX_AGE_MS. A valid state
+// older than that is rejected. (Codes from LinkedIn are themselves one-shot,
+// so replay window is bounded by OAuth too.)
+//
+// HMAC secret: SUPABASE_SERVICE_ROLE_KEY. It's server-only and already
+// required by every server route. Avoids adding a new env var.
 // ════════════════════════════════════════════════════════════════════
 
-export function encodeState(nonce: string, brandId: string): string {
-  return Buffer.from(JSON.stringify({ nonce, brand_id: brandId })).toString(
-    "base64url",
-  );
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+const STATE_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes
+
+function getStateSecret(): string {
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) {
+    throw new LinkedInOAuthError(
+      "SUPABASE_SERVICE_ROLE_KEY is required for OAuth state signing",
+    );
+  }
+  return secret;
+}
+
+function sign(data: string, secret: string): string {
+  return createHmac("sha256", secret).update(data).digest("base64url");
+}
+
+export function encodeState(brandId: string): string {
+  const payload = { brand_id: brandId, ts: Date.now() };
+  const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = sign(data, getStateSecret());
+  return `${data}.${sig}`;
 }
 
 const StatePayloadSchema = z.object({
-  nonce: z.string().min(8),
   brand_id: z.string().uuid(),
+  ts: z.number().int().positive(),
 });
 
-export function decodeState(state: string): { nonce: string; brandId: string } {
+export function decodeState(state: string): { brandId: string } {
+  const dot = state.indexOf(".");
+  if (dot === -1) {
+    throw new LinkedInOAuthError("state token missing signature");
+  }
+  const data = state.slice(0, dot);
+  const providedSig = state.slice(dot + 1);
+
+  const expectedSig = sign(data, getStateSecret());
+  // Constant-time comparison guards against timing attacks.
+  const a = Buffer.from(providedSig, "base64url");
+  const b = Buffer.from(expectedSig, "base64url");
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    throw new LinkedInOAuthError("state token signature invalid");
+  }
+
   let raw: unknown;
   try {
-    raw = JSON.parse(Buffer.from(state, "base64url").toString("utf-8"));
+    raw = JSON.parse(Buffer.from(data, "base64url").toString("utf-8"));
   } catch (err) {
     throw new LinkedInOAuthError("state token is not valid base64url JSON", undefined, err);
   }
@@ -234,5 +275,8 @@ export function decodeState(state: string): { nonce: string; brandId: string } {
       parsed.error,
     );
   }
-  return { nonce: parsed.data.nonce, brandId: parsed.data.brand_id };
+  if (Date.now() - parsed.data.ts > STATE_MAX_AGE_MS) {
+    throw new LinkedInOAuthError("state token expired");
+  }
+  return { brandId: parsed.data.brand_id };
 }

@@ -1,5 +1,3 @@
-import { randomBytes } from "node:crypto";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { buildAuthorizeUrl, encodeState, LinkedInOAuthError } from "@/lib/linkedin-oauth";
@@ -10,12 +8,9 @@ import { buildAuthorizeUrl, encodeState, LinkedInOAuthError } from "@/lib/linked
 //
 // 1. Auth check (must be signed in to Quoteworthy)
 // 2. Verify brand_id belongs to this user (RLS-scoped read)
-// 3. Generate random nonce, set httpOnly cookie (CSRF check on /callback)
-// 4. Encode state = base64url{ nonce, brand_id }
-// 5. Redirect user to LinkedIn authorize URL with state
-
-const NONCE_COOKIE = "linkedin_oauth_nonce";
-const NONCE_TTL_SECONDS = 600; // 10 minutes
+// 3. Build HMAC-signed state (encodes brand_id + timestamp; stateless —
+//    no cookie needed, signature itself proves authenticity)
+// 4. Redirect user to LinkedIn authorize URL with state
 
 export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url);
@@ -45,26 +40,14 @@ export async function GET(request: Request): Promise<Response> {
     return NextResponse.json({ error: "Brand not found" }, { status: 404 });
   }
 
-  // 32 bytes → 64 hex chars. More than enough entropy.
-  const nonce = randomBytes(32).toString("hex");
-  const state = encodeState(nonce, brandId);
-
   let authorizeUrl: string;
   try {
+    const state = encodeState(brandId);
     authorizeUrl = buildAuthorizeUrl(state);
   } catch (err) {
     const msg = err instanceof LinkedInOAuthError ? err.message : "LinkedIn config missing";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-
-  const cookieStore = await cookies();
-  cookieStore.set(NONCE_COOKIE, nonce, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: NONCE_TTL_SECONDS,
-    path: "/",
-  });
 
   return NextResponse.redirect(authorizeUrl);
 }

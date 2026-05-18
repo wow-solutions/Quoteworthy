@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -18,16 +17,14 @@ import {
 // (ADR-0017 D6, deliverable 9.2.5)
 //
 // 1. Read code+state from query (or error if LinkedIn returned one)
-// 2. Decode state → { nonce, brand_id }
-// 3. Compare nonce against httpOnly cookie set by /request (CSRF check)
-// 4. Auth check + brand ownership re-verification
-// 5. Exchange code → tokens
-// 6. Fetch user profile (sub + name) for display
-// 7. Store tokens in Vault → get secret_id
-// 8. UPSERT brand_oauth_tokens (clean up old vault secret first if reconnect)
-// 9. Redirect to /brands/[id]?linkedin=connected
-
-const NONCE_COOKIE = "linkedin_oauth_nonce";
+// 2. Verify state HMAC signature + timestamp (CSRF check, stateless — no
+//    cookie needed; signature proves the state was issued by us)
+// 3. Auth check + brand ownership re-verification
+// 4. Exchange code → tokens
+// 5. Fetch user profile (sub + name) for display
+// 6. Store tokens in Vault → get secret_id
+// 7. UPSERT brand_oauth_tokens (clean up old vault secret first if reconnect)
+// 8. Redirect to /brands/[id]?linkedin=connected
 
 function redirectToBrand(origin: string, brandId: string, params: Record<string, string>): Response {
   const url = new URL(`/brands/${brandId}`, origin);
@@ -63,25 +60,14 @@ export async function GET(request: Request): Promise<Response> {
     );
   }
 
-  let payload: { nonce: string; brandId: string };
+  // HMAC signature on the state token is the CSRF check.
+  let payload: { brandId: string };
   try {
     payload = decodeState(state);
   } catch (err) {
     const msg = err instanceof LinkedInOAuthError ? err.message : "Bad state";
-    return NextResponse.json({ error: msg }, { status: 400 });
+    return NextResponse.json({ error: msg }, { status: 403 });
   }
-
-  // CSRF check against httpOnly cookie set by /request
-  const cookieStore = await cookies();
-  const cookieNonce = cookieStore.get(NONCE_COOKIE)?.value;
-  if (!cookieNonce || cookieNonce !== payload.nonce) {
-    return NextResponse.json(
-      { error: "Invalid state (CSRF check failed)" },
-      { status: 403 },
-    );
-  }
-  // Single-use: clear the cookie after validation
-  cookieStore.delete(NONCE_COOKIE);
 
   // Re-verify auth + brand ownership (defense in depth)
   const supabase = await createClient();
