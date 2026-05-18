@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ type PageProps = {
 
 export default async function SignupPage({ searchParams }: PageProps) {
   const { error } = await searchParams;
+  const t = await getTranslations("auth.signup");
 
   return (
     <main
@@ -55,7 +57,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
             marginBottom: 6,
           }}
         >
-          Create your account
+          {t("title")}
         </h1>
         <p
           style={{
@@ -67,7 +69,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
             marginBottom: 24,
           }}
         >
-          14-day trial. No card required.
+          {t("tagline")}
         </p>
 
         {error && (
@@ -90,8 +92,8 @@ export default async function SignupPage({ searchParams }: PageProps) {
         <form action={signup} style={{ display: "grid", gap: 14 }}>
           <Field
             id="display_name"
-            label="Your name"
-            hint="optional"
+            label={t("displayName")}
+            hint={t("optional")}
           >
             <Input
               id="display_name"
@@ -100,7 +102,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
               autoComplete="name"
             />
           </Field>
-          <Field id="email" label="Email">
+          <Field id="email" label={t("email")}>
             <Input
               id="email"
               name="email"
@@ -109,7 +111,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
               autoComplete="email"
             />
           </Field>
-          <Field id="password" label="Password" hint="≥ 8 characters">
+          <Field id="password" label={t("password")} hint={t("passwordHint")}>
             <Input
               id="password"
               name="password"
@@ -120,7 +122,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
             />
           </Field>
           <Button type="submit" className="w-full mt-2 h-9">
-            Create account
+            {t("submit")}
           </Button>
         </form>
 
@@ -132,12 +134,12 @@ export default async function SignupPage({ searchParams }: PageProps) {
             textAlign: "center",
           }}
         >
-          Already have an account?{" "}
+          {t("haveAccount")}{" "}
           <Link
             href="/login"
             style={{ color: "var(--info)", textDecoration: "none" }}
           >
-            Log in
+            {t("loginLink")}
           </Link>
         </p>
 
@@ -151,27 +153,30 @@ export default async function SignupPage({ searchParams }: PageProps) {
             letterSpacing: "0.04em",
           }}
         >
-          By signing up you agree to our{" "}
-          <a
-            href="https://github.com/wow-solutions/Quoteworthy/blob/main/docs/terms.md"
-            style={{
-              color: "var(--ink-muted)",
-              textDecoration: "underline",
-            }}
-          >
-            Terms
-          </a>{" "}
-          and{" "}
-          <a
-            href="https://github.com/wow-solutions/Quoteworthy/blob/main/docs/privacy.md"
-            style={{
-              color: "var(--ink-muted)",
-              textDecoration: "underline",
-            }}
-          >
-            Privacy Policy
-          </a>
-          .
+          {t.rich("legal", {
+            terms: (chunks) => (
+              <a
+                href="https://github.com/wow-solutions/Quoteworthy/blob/main/docs/terms.md"
+                style={{
+                  color: "var(--ink-muted)",
+                  textDecoration: "underline",
+                }}
+              >
+                {chunks}
+              </a>
+            ),
+            privacy: (chunks) => (
+              <a
+                href="https://github.com/wow-solutions/Quoteworthy/blob/main/docs/privacy.md"
+                style={{
+                  color: "var(--ink-muted)",
+                  textDecoration: "underline",
+                }}
+              >
+                {chunks}
+              </a>
+            ),
+          })}
         </p>
       </div>
     </main>

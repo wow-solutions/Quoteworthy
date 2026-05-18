@@ -1,5 +1,6 @@
-import Link from "next/link";
-import { redirect, notFound } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
+import { notFound, redirect } from "next/navigation";
+import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/shell/top-bar";
 import { BrandDot } from "@/components/brand/brand-dot";
@@ -21,6 +22,9 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const t = await getTranslations("brandDetail");
+  const locale = await getLocale();
 
   // Fetch brand (RLS-scoped)
   const { data: brand } = await supabase
@@ -59,7 +63,7 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
       <TopBar
         brands={switcherBrands}
         currentBrandId={brand.id}
-        breadcrumbSection="Brand"
+        breadcrumbSection={t("breadcrumb")}
         breadcrumbCurrent={brand.name}
       />
 
@@ -104,15 +108,15 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
         {sp.linkedin === "connected" && (
           <Banner
             tone="success"
-            title="LinkedIn подключён"
-            body="Теперь ты можешь публиковать посты в свой LinkedIn из этого бренда."
+            title={t("toast.connectedTitle")}
+            body={t("toast.connectedBody")}
           />
         )}
         {sp.linkedin_error && (
           <Banner
             tone="error"
-            title={`Ошибка подключения LinkedIn (${sp.linkedin_error})`}
-            body={sp.message ?? "Попробуй ещё раз. Если повторяется — проверь логи."}
+            title={t("toast.errorTitle", { code: sp.linkedin_error })}
+            body={sp.message ?? t("toast.errorFallback")}
           />
         )}
 
@@ -126,7 +130,7 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
             letterSpacing: "-0.01em",
           }}
         >
-          Подключённые платформы
+          {t("platformsHeader")}
         </h2>
 
         <div
@@ -164,7 +168,10 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
                     margin: 0,
                   }}
                 >
-                  Подключён: <strong>{linkedinToken.account_handle}</strong>
+                  {t.rich("linkedin.connectedAs", {
+                    handle: linkedinToken.account_handle ?? "",
+                    strong: (chunks) => <strong>{chunks}</strong>,
+                  })}
                   <span
                     style={{
                       fontFamily: "var(--font-mono)",
@@ -173,7 +180,7 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
                       marginLeft: 12,
                     }}
                   >
-                    с {formatDate(linkedinToken.connected_at)}
+                    {t("linkedin.since", { date: formatDate(linkedinToken.connected_at, locale) })}
                   </span>
                 </p>
               ) : (
@@ -184,7 +191,7 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
                     margin: 0,
                   }}
                 >
-                  Не подключён. Подключи свой личный LinkedIn чтобы публиковать посты.
+                  {t("linkedin.notConnected")}
                 </p>
               )}
             </div>
@@ -195,11 +202,11 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
                   href={`/api/auth/linkedin/request?brand_id=${brand.id}`}
                   style={buttonStyleSecondary()}
                 >
-                  Переподключить
+                  {t("linkedin.reconnect")}
                 </Link>
                 <form action={disconnectWithBrand.bind(null, brand.id)}>
                   <button type="submit" style={buttonStyleDanger()}>
-                    Отключить
+                    {t("linkedin.disconnect")}
                   </button>
                 </form>
               </div>
@@ -208,7 +215,7 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
                 href={`/api/auth/linkedin/request?brand_id=${brand.id}`}
                 style={buttonStylePrimary()}
               >
-                Подключить LinkedIn
+                {t("linkedin.connect")}
               </Link>
             )}
           </div>
@@ -224,7 +231,7 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
               textDecoration: "none",
             }}
           >
-            ← Все бренды
+            {t("back")}
           </Link>
         </div>
       </section>
@@ -326,10 +333,14 @@ function buttonStyleDanger(): React.CSSProperties {
   };
 }
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, locale: string): string {
   try {
     const d = new Date(iso);
-    return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" });
+    return d.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   } catch {
     return iso;
   }

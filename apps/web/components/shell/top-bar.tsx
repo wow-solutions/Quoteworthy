@@ -1,6 +1,7 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { QuoteworthyMark } from "./quoteworthy-mark";
 import { BrandSwitcher, type BrandOption } from "@/components/brand/brand-switcher";
+import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 
 type Props = {
   brands: BrandOption[];
@@ -106,22 +107,25 @@ export function TopBar({
         New post
       </Link>
 
-      <div
-        title="Account"
-        aria-label="Account"
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          background: "linear-gradient(135deg, #6E8FA8, #4A6F8F)",
-          display: "grid",
-          placeItems: "center",
-          fontSize: 11,
-          fontWeight: 600,
-          color: "#fff",
-        }}
-      >
-        {userInitials.slice(0, 2).toUpperCase()}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <LocaleSwitcher />
+        <div
+          title="Account"
+          aria-label="Account"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, #6E8FA8, #4A6F8F)",
+            display: "grid",
+            placeItems: "center",
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#fff",
+          }}
+        >
+          {userInitials.slice(0, 2).toUpperCase()}
+        </div>
       </div>
     </header>
   );

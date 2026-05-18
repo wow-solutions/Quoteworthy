@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import {
   FormControl,
   FormDescription,
@@ -23,6 +24,7 @@ import { slugify, type WizardData } from "../schema";
 
 export function StepBasics() {
   const { control, watch, setValue, getValues } = useFormContext<WizardData>();
+  const t = useTranslations("wizard.steps.basics");
   const name = watch("name");
 
   // Auto-fill slug from name until the user touches the slug field manually.
@@ -41,13 +43,10 @@ export function StepBasics() {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Brand name *</FormLabel>
-            <FormDescription>
-              The display name shown in your dashboard. Can be anything — your
-              company, a product line, a personal channel.
-            </FormDescription>
+            <FormLabel>{t("nameLabel")}</FormLabel>
+            <FormDescription>{t("nameDescription")}</FormDescription>
             <FormControl>
-              <Input placeholder="24Clima" {...field} />
+              <Input placeholder={t("namePlaceholder")} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -59,14 +58,10 @@ export function StepBasics() {
         name="slug"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>URL slug *</FormLabel>
-            <FormDescription>
-              A short identifier used in URLs. Auto-generated from the brand
-              name — letters, digits, hyphens. You can edit it, but it&apos;s
-              awkward to change later, so keep it short.
-            </FormDescription>
+            <FormLabel>{t("slugLabel")}</FormLabel>
+            <FormDescription>{t("slugDescription")}</FormDescription>
             <FormControl>
-              <Input placeholder="24clima" {...field} />
+              <Input placeholder={t("slugPlaceholder")} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -78,13 +73,14 @@ export function StepBasics() {
         name="website_url"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Website</FormLabel>
+            <FormLabel>{t("websiteLabel")}</FormLabel>
             <FormDescription>
-              Optional. Bare domain works — e.g. <code>24clima.com</code>.
-              We&apos;ll add <code>https://</code> for you.
+              {t.rich("websiteDescription", {
+                code: (chunks) => <code>{chunks}</code>,
+              })}
             </FormDescription>
             <FormControl>
-              <Input placeholder="24clima.com" {...field} />
+              <Input placeholder={t("websitePlaceholder")} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -96,13 +92,10 @@ export function StepBasics() {
         name="industry"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Industry</FormLabel>
-            <FormDescription>
-              Free text — what business is this? Used to ground the AI when it
-              writes about adjacent topics. Optional.
-            </FormDescription>
+            <FormLabel>{t("industryLabel")}</FormLabel>
+            <FormDescription>{t("industryDescription")}</FormDescription>
             <FormControl>
-              <Input placeholder="HVAC, B2B distributor" {...field} />
+              <Input placeholder={t("industryPlaceholder")} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -114,11 +107,8 @@ export function StepBasics() {
         name="primary_language"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Primary language *</FormLabel>
-            <FormDescription>
-              The main language posts will be generated in. You can change it
-              per-post later.
-            </FormDescription>
+            <FormLabel>{t("languageLabel")}</FormLabel>
+            <FormDescription>{t("languageDescription")}</FormDescription>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
@@ -143,15 +133,12 @@ export function StepBasics() {
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>One-line description</FormLabel>
-            <FormDescription>
-              Who is this brand for and what does it sell? One sentence is
-              plenty — the AI uses this to stay on-topic.
-            </FormDescription>
+            <FormLabel>{t("descriptionLabel")}</FormLabel>
+            <FormDescription>{t("descriptionDescription")}</FormDescription>
             <FormControl>
               <Textarea
                 rows={2}
-                placeholder="B2B HVAC distributor in Panama, focused on commercial installers."
+                placeholder={t("descriptionPlaceholder")}
                 {...field}
               />
             </FormControl>

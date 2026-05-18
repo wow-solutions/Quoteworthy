@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,8 +40,21 @@ const STEP_BODY: Record<(typeof STEPS)[number]["id"], React.ComponentType> = {
   review: StepReview,
 };
 
+// Step IDs in schema use kebab-case; translation keys use camelCase.
+const STEP_KEY: Record<(typeof STEPS)[number]["id"], string> = {
+  basics: "basics",
+  voice: "voice",
+  "word-guards": "wordGuards",
+  voc: "voc",
+  seo: "seo",
+  approval: "approval",
+  review: "review",
+};
+
 export function BrandWizard() {
   const router = useRouter();
+  const t = useTranslations("wizard.shell");
+  const tSteps = useTranslations("wizard.steps");
   const [stepIndex, setStepIndex] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -77,6 +91,7 @@ export function BrandWizard() {
   const step = STEPS[stepIndex];
   const Body = STEP_BODY[step.id];
   const isLast = stepIndex === STEPS.length - 1;
+  const stepLabel = tSteps(`${STEP_KEY[step.id]}.label`);
 
   async function handleNext() {
     setSubmitError(null);
@@ -99,7 +114,7 @@ export function BrandWizard() {
     startTransition(async () => {
       const ok = await methods.trigger();
       if (!ok) {
-        setSubmitError("Please review highlighted fields.");
+        setSubmitError(t("reviewErrors"));
         return;
       }
       const values = methods.getValues();
@@ -117,9 +132,9 @@ export function BrandWizard() {
     <FormProvider {...methods}>
       <Card>
         <CardHeader>
-          <CardTitle>{step.label}</CardTitle>
+          <CardTitle>{stepLabel}</CardTitle>
           <CardDescription>
-            Step {stepIndex + 1} of {STEPS.length}
+            {t("stepCounter", { current: stepIndex + 1, total: STEPS.length })}
           </CardDescription>
           <div className="mt-3 flex flex-wrap gap-1">
             {STEPS.map((s, i) => (
@@ -145,15 +160,15 @@ export function BrandWizard() {
               onClick={handleBack}
               disabled={stepIndex === 0 || pending}
             >
-              Back
+              {t("back")}
             </Button>
             {isLast ? (
               <Button type="button" onClick={handleSubmitFinal} disabled={pending}>
-                {pending ? "Creating…" : "Create brand"}
+                {pending ? t("creating") : t("create")}
               </Button>
             ) : (
               <Button type="button" onClick={handleNext}>
-                Next
+                {t("next")}
               </Button>
             )}
           </div>

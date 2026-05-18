@@ -1,7 +1,9 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
+import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { QuoteworthyMark } from "@/components/shell/quoteworthy-mark";
+import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 import { Button } from "@/components/ui/button";
 
 export default async function HomePage() {
@@ -30,7 +32,8 @@ export default async function HomePage() {
 
 /* ──────────────────────────────────────────────────────────── */
 
-function Header() {
+async function Header() {
+  const t = await getTranslations("landing.header");
   return (
     <header
       style={{
@@ -54,7 +57,7 @@ function Header() {
         >
           Quoteworthy
         </span>
-        <Eyebrow style={{ marginLeft: 8 }}>pre-alpha</Eyebrow>
+        <Eyebrow style={{ marginLeft: 8 }}>{t("preAlpha")}</Eyebrow>
       </div>
 
       <nav
@@ -72,20 +75,22 @@ function Header() {
           GitHub
         </a>
         <Link href="/login" style={{ color: "var(--ink-muted)" }}>
-          Log in
+          {t("login")}
         </Link>
         <Link href="/signup">
-          <Button size="sm">Sign up</Button>
+          <Button size="sm">{t("signup")}</Button>
         </Link>
+        <LocaleSwitcher />
       </nav>
     </header>
   );
 }
 
-function Hero() {
+async function Hero() {
+  const t = await getTranslations("landing.hero");
   return (
     <Section paddingY={120}>
-      <Eyebrow>Detection-aware content AI</Eyebrow>
+      <Eyebrow>{t("eyebrow")}</Eyebrow>
       <h1
         style={{
           fontSize: "var(--text-display)",
@@ -97,7 +102,7 @@ function Hero() {
           maxWidth: 760,
         }}
       >
-        Posts your clients can actually publish.
+        {t("h1")}
       </h1>
       <p
         style={{
@@ -109,7 +114,7 @@ function Hero() {
           marginBottom: 24,
         }}
       >
-        Content AI wants to quote.
+        {t("tagline")}
       </p>
       <p
         style={{
@@ -121,13 +126,11 @@ function Hero() {
           maxWidth: 620,
         }}
       >
-        Quoteworthy generates LinkedIn and blog posts in your client&apos;s
-        voice — Pangram-verified to pass AI detection. Built for boutique
-        agencies juggling many brands at once.
+        {t("body")}
       </p>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Link href="/signup">
-          <Button size="lg">Sign up</Button>
+          <Button size="lg">{t("signup")}</Button>
         </Link>
         <Link
           href="/login"
@@ -137,17 +140,18 @@ function Hero() {
             padding: "10px 14px",
           }}
         >
-          Already have an account →
+          {t("alreadyHave")}
         </Link>
       </div>
     </Section>
   );
 }
 
-function Problem() {
+async function Problem() {
+  const t = await getTranslations("landing.problem");
   return (
     <Section paddingY={96} bordered>
-      <Eyebrow>The 2026 penalty</Eyebrow>
+      <Eyebrow>{t("eyebrow")}</Eyebrow>
       <h2
         style={{
           fontSize: "var(--text-h1)",
@@ -159,7 +163,7 @@ function Problem() {
           maxWidth: 640,
         }}
       >
-        LinkedIn now penalizes AI-detected posts.
+        {t("h2")}
       </h2>
 
       <div
@@ -171,9 +175,9 @@ function Problem() {
           marginBottom: 24,
         }}
       >
-        <Stat number="−30%" label="reach on detected posts" />
-        <Stat number="−55%" label="engagement loss" />
-        <Stat number="1 in 4" label="AI posts flagged" />
+        <Stat number={t("stat1.number")} label={t("stat1.label")} />
+        <Stat number={t("stat2.number")} label={t("stat2.label")} />
+        <Stat number={t("stat3.number")} label={t("stat3.label")} />
       </div>
 
       <p
@@ -185,18 +189,17 @@ function Problem() {
           maxWidth: 620,
         }}
       >
-        Agency clients can&apos;t afford the haircut. Generic AI tools fail
-        detection because they all sound the same. Quoteworthy is built
-        around the detector, not despite it.
+        {t("body")}
       </p>
     </Section>
   );
 }
 
-function How() {
+async function How() {
+  const t = await getTranslations("landing.how");
   return (
     <Section paddingY={96} bordered>
-      <Eyebrow>How it works</Eyebrow>
+      <Eyebrow>{t("eyebrow")}</Eyebrow>
       <h2
         style={{
           fontSize: "var(--text-h1)",
@@ -207,7 +210,7 @@ function How() {
           margin: "16px 0 40px",
         }}
       >
-        Three steps from brand to publishable post.
+        {t("h2")}
       </h2>
 
       <div
@@ -217,30 +220,19 @@ function How() {
           gap: 32,
         }}
       >
-        <Step
-          n="01"
-          title="Define brand voice"
-          body="A short wizard captures each client's tone, audience, and vocabulary. Five minutes per brand, once."
-        />
-        <Step
-          n="02"
-          title="Generate posts"
-          body="One button. Quoteworthy writes in the brand's voice — not generic-LLM voice. Edit inline if you want."
-        />
-        <Step
-          n="03"
-          title="See Detection Pass Score"
-          body="Every draft is scored by Pangram before you ship. Green means safe to publish."
-        />
+        <Step n="01" title={t("step1.title")} body={t("step1.body")} />
+        <Step n="02" title={t("step2.title")} body={t("step2.body")} />
+        <Step n="03" title={t("step3.title")} body={t("step3.body")} />
       </div>
     </Section>
   );
 }
 
-function FinalCTA() {
+async function FinalCTA() {
+  const t = await getTranslations("landing.finalCta");
   return (
     <Section paddingY={96} bordered>
-      <Eyebrow>Get started</Eyebrow>
+      <Eyebrow>{t("eyebrow")}</Eyebrow>
       <h2
         style={{
           fontSize: "var(--text-h1)",
@@ -251,7 +243,7 @@ function FinalCTA() {
           margin: "16px 0 12px",
         }}
       >
-        Start writing posts that pass.
+        {t("h2")}
       </h2>
       <p
         style={{
@@ -262,11 +254,11 @@ function FinalCTA() {
           maxWidth: 560,
         }}
       >
-        Free during pre-alpha. No card required.
+        {t("body")}
       </p>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Link href="/signup">
-          <Button size="lg">Sign up</Button>
+          <Button size="lg">{t("signup")}</Button>
         </Link>
         <a
           href="https://github.com/wow-solutions/Quoteworthy"
@@ -276,14 +268,15 @@ function FinalCTA() {
             padding: "10px 14px",
           }}
         >
-          View on GitHub →
+          {t("github")}
         </a>
       </div>
     </Section>
   );
 }
 
-function Footer() {
+async function Footer() {
+  const t = await getTranslations("landing.footer");
   return (
     <footer
       style={{
@@ -294,19 +287,19 @@ function Footer() {
         borderTop: "1px solid var(--border-subtle)",
       }}
     >
-      Apache 2.0 ·{" "}
+      {t("license")} ·{" "}
       <a
         href="https://github.com/wow-solutions/Quoteworthy/blob/main/docs/privacy.md"
         style={{ color: "var(--ink-faint)" }}
       >
-        Privacy
+        {t("privacy")}
       </a>{" "}
       ·{" "}
       <a
         href="https://github.com/wow-solutions/Quoteworthy/blob/main/docs/terms.md"
         style={{ color: "var(--ink-faint)" }}
       >
-        Terms
+        {t("terms")}
       </a>
     </footer>
   );

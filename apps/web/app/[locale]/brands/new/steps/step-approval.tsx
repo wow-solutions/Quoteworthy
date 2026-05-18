@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import {
   FormControl,
   FormField,
@@ -9,42 +10,33 @@ import {
 } from "@/components/ui/form";
 import type { WizardData } from "../schema";
 
-type Option = {
-  value: "manual" | "auto";
-  title: string;
-  description: string;
-};
-
-const OPTIONS: Option[] = [
-  {
-    value: "manual",
-    title: "Manual approval",
-    description:
-      "Every generated post lands in pending_approval. You click Approve before publish.",
-  },
-  {
-    value: "auto",
-    title: "Auto-publish",
-    description:
-      "Generated post goes straight to draft. Riskier — recommended after dogfood phase.",
-  },
-];
-
 export function StepApproval() {
   const { control } = useFormContext<WizardData>();
+  const t = useTranslations("wizard.steps.approval");
+
+  const options: Array<{ value: "manual" | "auto"; title: string; description: string }> = [
+    {
+      value: "manual",
+      title: t("manualTitle"),
+      description: t("manualBody"),
+    },
+    {
+      value: "auto",
+      title: t("autoTitle"),
+      description: t("autoBody"),
+    },
+  ];
+
   return (
     <FormField
       control={control}
       name="approval_mode"
       render={({ field }) => (
         <FormItem className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            What happens after the AI generates a post? You can change this
-            anytime in brand settings.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("intro")}</p>
           <FormControl>
             <div className="grid gap-3">
-              {OPTIONS.map((opt) => {
+              {options.map((opt) => {
                 const selected = field.value === opt.value;
                 return (
                   <button

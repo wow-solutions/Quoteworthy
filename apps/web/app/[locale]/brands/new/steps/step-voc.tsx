@@ -1,6 +1,7 @@
 "use client";
 
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
@@ -23,6 +24,7 @@ function QuoteList({
   quotePlaceholder: string;
 }) {
   const { control, register } = useFormContext<WizardData>();
+  const t = useTranslations("wizard.steps.voc");
   const { fields, append, remove } = useFieldArray({ control, name });
   return (
     <div className="space-y-3">
@@ -34,7 +36,7 @@ function QuoteList({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Quote
+                  {t("quoteLabel")}
                 </FormLabel>
                 <FormControl>
                   <Textarea rows={2} placeholder={quotePlaceholder} {...field} />
@@ -45,11 +47,11 @@ function QuoteList({
           />
           <div className="flex gap-2">
             <Input
-              placeholder="Source (Twitter, customer call, support ticket…)"
+              placeholder={t("sourcePlaceholder")}
               {...register(`${name}.${idx}.source` as const)}
             />
             <Button type="button" variant="ghost" onClick={() => remove(idx)}>
-              Remove
+              {t("remove")}
             </Button>
           </div>
         </div>
@@ -60,7 +62,7 @@ function QuoteList({
           variant="outline"
           onClick={() => append({ quote: "", source: "" })}
         >
-          + Add quote ({fields.length} / 10)
+          {t("addQuote", { current: fields.length, max: 10 })}
         </Button>
       )}
     </div>
@@ -69,31 +71,24 @@ function QuoteList({
 
 export function StepVoc() {
   const { control } = useFormContext<WizardData>();
+  const t = useTranslations("wizard.steps.voc");
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="font-medium mb-1">Customer pain points</h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          Real things customers say when something hurts. Paste verbatim from
-          support tickets, calls, reviews, DMs — any source. The AI mirrors
-          this language so the post sounds like it&apos;s coming from someone
-          who&apos;s actually talked to a customer. Up to 10 quotes.
-        </p>
+        <h3 className="font-medium mb-1">{t("painTitle")}</h3>
+        <p className="text-sm text-muted-foreground mb-3">{t("painBody")}</p>
         <QuoteList
           name="voc_pain_points"
-          quotePlaceholder="“My old AC keeps breaking every summer.”"
+          quotePlaceholder={t("painPlaceholder")}
         />
       </div>
 
       <div>
-        <h3 className="font-medium mb-1">Desired outcomes</h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          What customers say they want — in their words, not yours. The flip
-          side of pain points. Up to 10 quotes.
-        </p>
+        <h3 className="font-medium mb-1">{t("outcomesTitle")}</h3>
+        <p className="text-sm text-muted-foreground mb-3">{t("outcomesBody")}</p>
         <QuoteList
           name="voc_desired_outcomes"
-          quotePlaceholder="“I want it to just work for 10 years.”"
+          quotePlaceholder={t("outcomesPlaceholder")}
         />
       </div>
 
@@ -102,17 +97,14 @@ export function StepVoc() {
         name="trigger_events"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Trigger events</FormLabel>
-            <FormDescription>
-              Specific moments that push someone to look for this brand. Used
-              when generating timely content. Optional, up to 10.
-            </FormDescription>
+            <FormLabel>{t("triggersLabel")}</FormLabel>
+            <FormDescription>{t("triggersDescription")}</FormDescription>
             <FormControl>
               <TagInput
                 value={field.value ?? []}
                 onChange={field.onChange}
                 max={10}
-                placeholder="new office build-out, AC breakdown in summer"
+                placeholder={t("triggersPlaceholder")}
               />
             </FormControl>
             <FormMessage />

@@ -1,5 +1,6 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
+import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/shell/top-bar";
 import { BrandDot } from "@/components/brand/brand-dot";
@@ -19,6 +20,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const t = await getTranslations("dashboard");
 
   const { data: account } = await supabase
     .from("accounts")
@@ -64,7 +67,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       <TopBar
         brands={switcherBrands}
         currentBrandId={null}
-        breadcrumbSection="Brands"
+        breadcrumbSection={t("breadcrumb")}
         userInitials={userInitials}
       />
 
@@ -93,7 +96,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 margin: 0,
               }}
             >
-              Your brands
+              {t("title")}
             </h1>
             <p
               style={{
@@ -123,7 +126,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                   color: "var(--ink-faint)",
                 }}
               >
-                {list.length} brand{list.length === 1 ? "" : "s"}
+                {t("brandCount", { count: list.length })}
               </span>
             </p>
           </div>
@@ -143,7 +146,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                   cursor: "pointer",
                 }}
               >
-                Sign out
+                {t("signOut")}
               </button>
             </form>
             <Link
@@ -162,13 +165,17 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 fontWeight: 500,
               }}
             >
-              + Add brand
+              {t("addBrand")}
             </Link>
           </div>
         </div>
 
         {list.length === 0 ? (
-          <EmptyState />
+          <EmptyState
+            title={t("empty.title")}
+            body={t("empty.body")}
+            cta={t("empty.cta")}
+          />
         ) : (
           <ul
             style={{
@@ -185,6 +192,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 key={b.id}
                 brand={b}
                 isNew={highlightId === b.id}
+                labels={{
+                  newBadge: t("card.newBadge"),
+                  writer: t("card.writer"),
+                  postsSoon: t("card.postsSoon"),
+                  postsSoonTooltip: t("card.postsSoonTooltip"),
+                  connections: t("card.connections"),
+                }}
               />
             ))}
           </ul>
@@ -197,6 +211,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 function BrandCard({
   brand,
   isNew,
+  labels,
 }: {
   brand: {
     id: string;
@@ -206,6 +221,13 @@ function BrandCard({
     primary_language: string;
   };
   isNew: boolean;
+  labels: {
+    newBadge: string;
+    writer: string;
+    postsSoon: string;
+    postsSoonTooltip: string;
+    connections: string;
+  };
 }) {
   const color = brandColor(brand.slug);
   return (
@@ -267,7 +289,7 @@ function BrandCard({
               borderRadius: 4,
             }}
           >
-            New
+            {labels.newBadge}
           </span>
         )}
       </div>
@@ -312,10 +334,10 @@ function BrandCard({
             gap: 4,
           }}
         >
-          Writer →
+          {labels.writer}
         </Link>
         <span
-          title="Posts list — Sprint 1A next"
+          title={labels.postsSoonTooltip}
           style={{
             fontFamily: "var(--font-mono)",
             fontSize: 11,
@@ -325,7 +347,7 @@ function BrandCard({
             cursor: "not-allowed",
           }}
         >
-          Posts · soon
+          {labels.postsSoon}
         </span>
         <Link
           href={`/brands/${brand.id}`}
@@ -344,14 +366,14 @@ function BrandCard({
             textDecoration: "none",
           }}
         >
-          Connections →
+          {labels.connections}
         </Link>
       </div>
     </li>
   );
 }
 
-function EmptyState() {
+function EmptyState({ title, body, cta }: { title: string; body: string; cta: string }) {
   return (
     <div
       style={{
@@ -373,7 +395,7 @@ function EmptyState() {
           letterSpacing: "-0.02em",
         }}
       >
-        No brands yet.
+        {title}
       </p>
       <p
         style={{
@@ -384,8 +406,7 @@ function EmptyState() {
           marginInline: "auto",
         }}
       >
-        The brand wizard collects voice, tone, customer language and SEO topics.
-        Takes about 3 minutes.
+        {body}
       </p>
       <Link
         href="/brands/new"
@@ -402,7 +423,7 @@ function EmptyState() {
           fontWeight: 500,
         }}
       >
-        Create your first brand
+        {cta}
       </Link>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import type { PangramResponse } from "@/lib/pangram";
 import { DetectionGauge } from "@/components/detection/detection-gauge";
 import { scoreBucket, bucketCssVar } from "@/lib/detection";
@@ -38,6 +39,7 @@ type Props = {
 };
 
 export function WriterClient({ brandId, brandName, brandConfig }: Props) {
+  const t = useTranslations("writer");
   const [topic, setTopic] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -88,7 +90,7 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
         }),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Network error");
+      setError(err instanceof Error ? err.message : t("networkError"));
       setStage("error");
       return;
     }
@@ -141,12 +143,12 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
 
   const generateLabel =
     stage === "generating"
-      ? "Generating draft… ~5s"
+      ? t("generating")
       : stage === "detecting"
-        ? "Checking detection… ~5s"
+        ? t("checkingDetection")
         : postId
-          ? "Regenerate"
-          : "Generate";
+          ? t("regenerate")
+          : t("generate");
 
   return (
     <div
@@ -168,7 +170,7 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
         }}
       >
         <CollapsibleSection
-          title="Brand context"
+          title={t("brandContext")}
           open={brandContextOpen}
           onToggle={() => setBrandContextOpen((v) => !v)}
           summary={
@@ -176,32 +178,32 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
               ? voiceShort.short !== "—"
                 ? voiceShort.short
                 : toneTop.shown.join(" · ")
-              : "No brand context configured"
+              : t("noBrandContext")
           }
         >
           <BrandSummaryRow
-            label="Voice"
+            label={t("rowVoice")}
             value={voiceShort.short}
             title={voiceShort.full ?? undefined}
           />
           {toneTop.shown.length > 0 && (
             <BrandSummaryRow
-              label="Tone"
-              value={formatList(toneTop)}
+              label={t("rowTone")}
+              value={formatList(toneTop, t("moreSuffix"))}
               title={brandConfig.toneAttributes.join(" · ")}
             />
           )}
           {avoidTop.shown.length > 0 && (
             <BrandSummaryRow
-              label="Avoid"
-              value={formatList(avoidTop)}
+              label={t("rowAvoid")}
+              value={formatList(avoidTop, t("moreSuffix"))}
               title={brandConfig.forbiddenWords.join(" · ")}
             />
           )}
           {topicsTop.shown.length > 0 && (
             <BrandSummaryRow
-              label="Topics"
-              value={formatList(topicsTop)}
+              label={t("rowTopics")}
+              value={formatList(topicsTop, t("moreSuffix"))}
               valueColor="var(--info)"
               title={brandConfig.seoKeywords.join(" · ")}
             />
@@ -209,7 +211,7 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
         </CollapsibleSection>
 
         <Section
-          title="Prompt"
+          title={t("prompt")}
           right={
             <span style={mono(11, "var(--ink-faint)")}>
               {topic.length} / 1000
@@ -221,27 +223,27 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
             onChange={(e) => setTopic(e.target.value.slice(0, 1000))}
             disabled={busy}
             rows={5}
-            placeholder={`Topic hint for ${brandName} — or leave blank.`}
+            placeholder={t("topicPlaceholder", { brand: brandName })}
             style={inputBase(true)}
           />
         </Section>
 
-        <Section title="Channel">
+        <Section title={t("channel")}>
           <Segmented
             options={[
               { label: "LinkedIn", value: "linkedin", icon: <LinkedInIcon /> },
-              { label: "Blog", value: "blog", disabled: true },
+              { label: t("channelBlog"), value: "blog", disabled: true },
               { label: "X", value: "x", disabled: true },
             ]}
             value="linkedin"
           />
           <div style={{ marginTop: 14 }}>
-            <Caption right={`~ 1,200 chars`}>Length</Caption>
+            <Caption right={t("lengthApprox")}>{t("length")}</Caption>
             <Segmented
               options={[
-                { label: "Short", value: "short", disabled: true },
-                { label: "Medium", value: "medium" },
-                { label: "Long", value: "long", disabled: true },
+                { label: t("lengthShort"), value: "short", disabled: true },
+                { label: t("lengthMedium"), value: "medium" },
+                { label: t("lengthLong"), value: "long", disabled: true },
               ]}
               value="medium"
             />
@@ -317,7 +319,7 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Untitled post"
+            placeholder={t("untitledPost")}
             style={{
               flex: 1,
               background: "transparent",
@@ -335,10 +337,10 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <Badge variant="neutral">LINKEDIN</Badge>
             <span style={mono(12, overLimit ? "var(--risky)" : "var(--ink-faint)")}>
-              {charCount} / {LINKEDIN_MAX} CHARS
+              {t("charsCounter", { current: charCount, max: LINKEDIN_MAX })}
             </span>
             {dirty && (
-              <span style={mono(12, "var(--borderline)")}>UNSAVED</span>
+              <span style={mono(12, "var(--borderline)")}>{t("unsaved")}</span>
             )}
           </div>
         </div>
@@ -358,7 +360,7 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={20}
-              placeholder="Generated draft will appear here…"
+              placeholder={t("draftPlaceholder")}
               style={{
                 width: "100%",
                 background: "transparent",
@@ -390,12 +392,12 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <span style={mono(11, "var(--ink-faint)")}>
               {status === null
-                ? "NOT SAVED"
+                ? t("statusNotSaved")
                 : stage === "saving"
-                  ? "SAVING…"
+                  ? t("statusSaving")
                   : dirty
-                    ? "EDITED · unsaved"
-                    : "SAVED"}
+                    ? t("statusEdited")
+                    : t("statusSaved")}
             </span>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -405,15 +407,15 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
                 disabled={busy || isPending || !dirty}
                 style={secondaryButton(busy || isPending || !dirty)}
               >
-                {stage === "saved" && !dirty ? "Saved" : "Save draft"}
+                {stage === "saved" && !dirty ? t("saved") : t("saveDraft")}
               </button>
             )}
             <button
               style={primaryButton(true, 32)}
               disabled
-              title="Sprint 1B — approval flow"
+              title={t("approveTooltip")}
             >
-              Approve →
+              {t("approve")}
             </button>
           </div>
         </footer>
@@ -442,7 +444,7 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
               marginBottom: 8,
             }}
           >
-            Detection Pass Score
+            {t("scoreTitle")}
           </div>
           <div style={{ display: "grid", placeItems: "center" }}>
             <DetectionGauge score={score} size="md" />
@@ -455,13 +457,16 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
               textTransform: "uppercase",
             }}
           >
-            {score === null
-              ? "Run Generate to score"
-              : `Pangram · last run just now`}
+            {score === null ? t("scoreEmpty") : t("scoreFresh")}
           </div>
         </div>
 
-        <Section title="Per-detector" right={<span style={mono(10, "var(--ink-faint)")}>AI prob · lower = better</span>}>
+        <Section
+          title={t("perDetector")}
+          right={
+            <span style={mono(10, "var(--ink-faint)")}>{t("aiProbHint")}</span>
+          }
+        >
           <DetectorRow
             name="Pangram"
             sub="v3 · weight 1.0"
@@ -469,20 +474,20 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
           />
           <DetectorRow
             name="GPTZero"
-            sub="not configured"
+            sub={t("notConfigured")}
             score={null}
             faded
           />
           <DetectorRow
             name="Originality.ai"
-            sub="not configured"
+            sub={t("notConfigured")}
             score={null}
             faded
           />
         </Section>
 
         {breakdown && (
-          <Section title="Pangram breakdown">
+          <Section title={t("breakdown")}>
             <div
               style={{
                 fontSize: 13,
@@ -500,14 +505,17 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
                 gap: 10,
               }}
             >
-              <Stat label="AI seg" value={breakdown.num_ai_segments} />
-              <Stat label="Assisted" value={breakdown.num_ai_assisted_segments} />
-              <Stat label="Human" value={breakdown.num_human_segments} />
+              <Stat label={t("statAi")} value={breakdown.num_ai_segments} />
+              <Stat label={t("statAssisted")} value={breakdown.num_ai_assisted_segments} />
+              <Stat label={t("statHuman")} value={breakdown.num_human_segments} />
             </div>
           </Section>
         )}
 
-        <Section title="Flagged spans" right={<span style={mono(11, "var(--ink-faint)")}>0</span>}>
+        <Section
+          title={t("flaggedSpans")}
+          right={<span style={mono(11, "var(--ink-faint)")}>0</span>}
+        >
           <div
             style={{
               ...mono(12, "var(--ink-faint)"),
@@ -516,14 +524,17 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
               letterSpacing: "0.06em",
             }}
           >
-            INLINE FLAGGING · SPRINT 2
+            {t("flaggedSoon")}
           </div>
         </Section>
 
-        <Section title="Run history" right={<span style={mono(11, "var(--ink-faint)")}>1</span>}>
+        <Section
+          title={t("runHistory")}
+          right={<span style={mono(11, "var(--ink-faint)")}>1</span>}
+        >
           {score !== null ? (
             <HistoryRow
-              when="just now · first gen"
+              when={t("historyFirst")}
               score={score}
               isLatest
             />
@@ -535,7 +546,7 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
                 letterSpacing: "0.06em",
               }}
             >
-              NO RUNS YET
+              {t("noRuns")}
             </div>
           )}
         </Section>
@@ -544,7 +555,7 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
           <button
             disabled
             style={secondaryButton(true, 40)}
-            title="Sprint 2 — adversarial humanizer"
+            title={t("rehumanizeTooltip")}
           >
             <svg
               width="14"
@@ -558,7 +569,7 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
               <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
               <path d="M21 3v5h-5" />
             </svg>
-            Re-humanize · Sprint 2
+            {t("rehumanize")}
           </button>
         </Section>
       </aside>
@@ -847,6 +858,7 @@ function Badge({
 }
 
 function Toolbar() {
+  const t = useTranslations("writer.toolbar");
   const Btn = ({ title }: { title: string }) => (
     <button
       title={title}
@@ -878,10 +890,10 @@ function Toolbar() {
         flexShrink: 0,
       }}
     >
-      <Btn title="Heading" />
-      <Btn title="Bold" />
-      <Btn title="Italic" />
-      <Btn title="Quote" />
+      <Btn title={t("heading")} />
+      <Btn title={t("bold")} />
+      <Btn title={t("italic")} />
+      <Btn title={t("quote")} />
       <div
         style={{
           width: 1,
@@ -891,8 +903,8 @@ function Toolbar() {
           alignSelf: "center",
         }}
       />
-      <Btn title="List" />
-      <Btn title="Link" />
+      <Btn title={t("list")} />
+      <Btn title={t("link")} />
       <div style={{ flex: 1 }} />
       <span
         style={{
@@ -902,7 +914,7 @@ function Toolbar() {
           textTransform: "uppercase",
         }}
       >
-        Tiptap · Sprint 2
+        {t("editorSoon")}
       </span>
     </div>
   );
@@ -1171,7 +1183,10 @@ function truncateList(
   return { shown: items.slice(0, max), rest: items.length - max };
 }
 
-function formatList(t: { shown: string[]; rest: number }): string {
+function formatList(
+  t: { shown: string[]; rest: number },
+  moreSuffix: string,
+): string {
   const base = t.shown.join(" · ");
-  return t.rest > 0 ? `${base} · +${t.rest} more` : base;
+  return t.rest > 0 ? `${base} · ${moreSuffix.replace("{n}", String(t.rest))}` : base;
 }

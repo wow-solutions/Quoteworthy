@@ -1,0 +1,308 @@
+{
+  "common": {
+    "languageSwitch": {
+      "label": "Language",
+      "en": "English",
+      "ru": "Русский"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Log in",
+      "tagline": "Content AI wants to quote.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Log in",
+      "noAccount": "No account?",
+      "signupLink": "Sign up"
+    },
+    "signup": {
+      "title": "Create your account",
+      "tagline": "14-day trial. No card required.",
+      "displayName": "Your name",
+      "optional": "optional",
+      "email": "Email",
+      "password": "Password",
+      "passwordHint": "≥ 8 characters",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Log in",
+      "legal": "By signing up you agree to our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>."
+    }
+  },
+  "dashboard": {
+    "breadcrumb": "Brands",
+    "title": "Your brands",
+    "brandCount": "{count, plural, =0 {no brands} one {# brand} other {# brands}}",
+    "signOut": "Sign out",
+    "addBrand": "+ Add brand",
+    "empty": {
+      "title": "No brands yet.",
+      "body": "The brand wizard collects voice, tone, customer language and SEO topics. Takes about 3 minutes.",
+      "cta": "Create your first brand"
+    },
+    "card": {
+      "newBadge": "New",
+      "writer": "Writer →",
+      "postsSoon": "Posts · soon",
+      "postsSoonTooltip": "Posts list — coming next",
+      "connections": "Connections →"
+    }
+  },
+  "brandDetail": {
+    "breadcrumb": "Brand",
+    "platformsHeader": "Connected platforms",
+    "back": "← All brands",
+    "toast": {
+      "connectedTitle": "LinkedIn connected",
+      "connectedBody": "You can now publish posts to your LinkedIn from this brand.",
+      "errorTitle": "LinkedIn connection error ({code})",
+      "errorFallback": "Try again. If it keeps happening — check the logs."
+    },
+    "linkedin": {
+      "connectedAs": "Connected: <strong>{handle}</strong>",
+      "since": "since {date}",
+      "notConnected": "Not connected. Connect your personal LinkedIn to publish posts.",
+      "connect": "Connect LinkedIn",
+      "reconnect": "Reconnect",
+      "disconnect": "Disconnect"
+    }
+  },
+  "landing": {
+    "header": {
+      "preAlpha": "pre-alpha",
+      "login": "Log in",
+      "signup": "Sign up"
+    },
+    "hero": {
+      "eyebrow": "Detection-aware content AI",
+      "h1": "Posts your clients can actually publish.",
+      "tagline": "Content AI wants to quote.",
+      "body": "Quoteworthy generates LinkedIn and blog posts in your client's voice — Pangram-verified to pass AI detection. Built for boutique agencies juggling many brands at once.",
+      "signup": "Sign up",
+      "alreadyHave": "Already have an account →"
+    },
+    "problem": {
+      "eyebrow": "The 2026 penalty",
+      "h2": "LinkedIn now penalizes AI-detected posts.",
+      "stat1": { "number": "−30%", "label": "reach on detected posts" },
+      "stat2": { "number": "−55%", "label": "engagement loss" },
+      "stat3": { "number": "1 in 4", "label": "AI posts flagged" },
+      "body": "Agency clients can't afford the haircut. Generic AI tools fail detection because they all sound the same. Quoteworthy is built around the detector, not despite it."
+    },
+    "how": {
+      "eyebrow": "How it works",
+      "h2": "Three steps from brand to publishable post.",
+      "step1": {
+        "title": "Define brand voice",
+        "body": "A short wizard captures each client's tone, audience, and vocabulary. Five minutes per brand, once."
+      },
+      "step2": {
+        "title": "Generate posts",
+        "body": "One button. Quoteworthy writes in the brand's voice — not generic-LLM voice. Edit inline if you want."
+      },
+      "step3": {
+        "title": "See Detection Pass Score",
+        "body": "Every draft is scored by Pangram before you ship. Green means safe to publish."
+      }
+    },
+    "finalCta": {
+      "eyebrow": "Get started",
+      "h2": "Start writing posts that pass.",
+      "body": "Free during pre-alpha. No card required.",
+      "signup": "Sign up",
+      "github": "View on GitHub →"
+    },
+    "footer": {
+      "license": "Apache 2.0",
+      "privacy": "Privacy",
+      "terms": "Terms"
+    }
+  },
+  "writer": {
+    "breadcrumb": "Writer",
+    "networkError": "Network error",
+    "generating": "Generating draft… ~5s",
+    "checkingDetection": "Checking detection… ~5s",
+    "regenerate": "Regenerate",
+    "generate": "Generate",
+    "brandContext": "Brand context",
+    "noBrandContext": "No brand context configured",
+    "rowVoice": "Voice",
+    "rowTone": "Tone",
+    "rowAvoid": "Avoid",
+    "rowTopics": "Topics",
+    "moreSuffix": "+{n} more",
+    "prompt": "Prompt",
+    "topicPlaceholder": "Topic hint for {brand} — or leave blank.",
+    "channel": "Channel",
+    "channelBlog": "Blog",
+    "length": "Length",
+    "lengthApprox": "~ 1,200 chars",
+    "lengthShort": "Short",
+    "lengthMedium": "Medium",
+    "lengthLong": "Long",
+    "untitledPost": "Untitled post",
+    "charsCounter": "{current} / {max} CHARS",
+    "unsaved": "UNSAVED",
+    "draftPlaceholder": "Generated draft will appear here…",
+    "statusNotSaved": "NOT SAVED",
+    "statusSaving": "SAVING…",
+    "statusEdited": "EDITED · unsaved",
+    "statusSaved": "SAVED",
+    "saved": "Saved",
+    "saveDraft": "Save draft",
+    "approve": "Approve →",
+    "approveTooltip": "Sprint 1B — approval flow",
+    "scoreTitle": "Detection Pass Score",
+    "scoreEmpty": "Run Generate to score",
+    "scoreFresh": "Pangram · last run just now",
+    "perDetector": "Per-detector",
+    "aiProbHint": "AI prob · lower = better",
+    "notConfigured": "not configured",
+    "breakdown": "Pangram breakdown",
+    "statAi": "AI seg",
+    "statAssisted": "Assisted",
+    "statHuman": "Human",
+    "flaggedSpans": "Flagged spans",
+    "flaggedSoon": "INLINE FLAGGING · SPRINT 2",
+    "runHistory": "Run history",
+    "historyFirst": "just now · first gen",
+    "noRuns": "NO RUNS YET",
+    "rehumanize": "Re-humanize · Sprint 2",
+    "rehumanizeTooltip": "Sprint 2 — adversarial humanizer",
+    "toolbar": {
+      "heading": "Heading",
+      "bold": "Bold",
+      "italic": "Italic",
+      "quote": "Quote",
+      "list": "List",
+      "link": "Link",
+      "editorSoon": "Tiptap · Sprint 2"
+    }
+  },
+  "wizard": {
+    "shell": {
+      "title": "Add a brand",
+      "intro": "One brand = one set of voice rules, customer language, SEO topics, and connected social accounts. You can add more brands later.",
+      "backToDashboard": "← Dashboard",
+      "stepCounter": "Step {current} of {total}",
+      "back": "Back",
+      "next": "Next",
+      "create": "Create brand",
+      "creating": "Creating…",
+      "reviewErrors": "Please review highlighted fields."
+    },
+    "steps": {
+      "basics": {
+        "label": "Brand basics",
+        "nameLabel": "Brand name *",
+        "nameDescription": "The display name shown in your dashboard. Can be anything — your company, a product line, a personal channel.",
+        "namePlaceholder": "24Clima",
+        "slugLabel": "URL slug *",
+        "slugDescription": "A short identifier used in URLs. Auto-generated from the brand name — letters, digits, hyphens. You can edit it, but it's awkward to change later, so keep it short.",
+        "slugPlaceholder": "24clima",
+        "websiteLabel": "Website",
+        "websiteDescription": "Optional. Bare domain works — e.g. <code>24clima.com</code>. We'll add <code>https://</code> for you.",
+        "websitePlaceholder": "24clima.com",
+        "industryLabel": "Industry",
+        "industryDescription": "Free text — what business is this? Used to ground the AI when it writes about adjacent topics. Optional.",
+        "industryPlaceholder": "HVAC, B2B distributor",
+        "languageLabel": "Primary language *",
+        "languageDescription": "The main language posts will be generated in. You can change it per-post later.",
+        "descriptionLabel": "One-line description",
+        "descriptionDescription": "Who is this brand for and what does it sell? One sentence is plenty — the AI uses this to stay on-topic.",
+        "descriptionPlaceholder": "B2B HVAC distributor in Panama, focused on commercial installers."
+      },
+      "voice": {
+        "label": "Brand voice",
+        "toneLabel": "Tone attributes",
+        "toneDescription": "Short adjectives that describe how the brand sounds. Enter or comma to add. Examples: professional, warm, no-nonsense, witty. Max 8 — fewer is usually better.",
+        "tonePlaceholder": "professional, warm, authoritative",
+        "voiceLabel": "Brand voice in one sentence (optional)",
+        "voiceDescription": "How would you describe the voice if you had to explain it to a new hire in one breath? Skip if the articles below say it for you.",
+        "voicePlaceholder": "Like a senior engineer talking to peers — direct, technical, zero fluff.",
+        "articlesLabel": "Voice articles",
+        "articlesDescription": "Paste up to {maxArticles} pieces of real writing that already sound like this brand — a blog post, LinkedIn essay, newsletter, even a long sales email. The AI will mirror this style when generating new posts. Up to {maxWords} words per article — anything longer is trimmed automatically. The more you give us, the better — but the first article is the most important.",
+        "articleNumber": "Article {n}",
+        "articlePlaceholder": "Paste the full text of one article here…",
+        "wordCount": "{current} / {max} words",
+        "trimmedSuffix": "· trimmed to {max}",
+        "addArticle": "+ Add article ({current} / {max})",
+        "remove": "Remove",
+        "noArticlesHint": "No articles yet. Skipping is OK — generation will fall back to tone attributes alone, but quality will be lower."
+      },
+      "wordGuards": {
+        "label": "Word guards",
+        "forbiddenLabel": "Forbidden words",
+        "forbiddenDescription": "Words and phrases the AI must never use. Best place to drop corporate clichés you hate («leverage», «synergy», «unlock»). Enter or comma to add. Up to 50.",
+        "forbiddenPlaceholder": "leverage, elevate, in today's fast-paced world",
+        "requiredLabel": "Required phrases",
+        "requiredDescription": "Branded terms or pet phrases the AI should weave in when natural — product names, taglines, your usual signoff. Optional. Up to 20.",
+        "requiredPlaceholder": "commercial-grade, factory authorized"
+      },
+      "voc": {
+        "label": "Customer voice",
+        "painTitle": "Customer pain points",
+        "painBody": "Real things customers say when something hurts. Paste verbatim from support tickets, calls, reviews, DMs — any source. The AI mirrors this language so the post sounds like it's coming from someone who's actually talked to a customer. Up to 10 quotes.",
+        "painPlaceholder": "“My old AC keeps breaking every summer.”",
+        "outcomesTitle": "Desired outcomes",
+        "outcomesBody": "What customers say they want — in their words, not yours. The flip side of pain points. Up to 10 quotes.",
+        "outcomesPlaceholder": "“I want it to just work for 10 years.”",
+        "quoteLabel": "Quote",
+        "sourcePlaceholder": "Source (Twitter, customer call, support ticket…)",
+        "addQuote": "+ Add quote ({current} / {max})",
+        "remove": "Remove",
+        "triggersLabel": "Trigger events",
+        "triggersDescription": "Specific moments that push someone to look for this brand. Used when generating timely content. Optional, up to 10.",
+        "triggersPlaceholder": "new office build-out, AC breakdown in summer"
+      },
+      "seo": {
+        "label": "SEO keywords (optional)",
+        "optionalTitle": "This whole step is optional.",
+        "optionalBody": "In a future version we'll auto-research keywords for you via DataForSEO — you'll see traffic, difficulty, and trend curves and pick from a recommended list. For now: leave both fields empty and we'll generate based on your description, or add a few manually if you already know them.",
+        "primaryLabel": "Primary keywords",
+        "primaryDescription": "The 3-8 topics this brand most wants to be found for. Up to 15. Enter or comma to add.",
+        "primaryPlaceholder": "commercial HVAC Panama, ductless mini-split installation",
+        "secondaryLabel": "Secondary keywords",
+        "secondaryDescription": "Adjacent topics — broader subjects worth occasionally writing about even if they're not core. Up to 30.",
+        "secondaryPlaceholder": "energy efficiency, building codes, refrigerant phase-out"
+      },
+      "approval": {
+        "label": "Approval mode",
+        "intro": "What happens after the AI generates a post? You can change this anytime in brand settings.",
+        "manualTitle": "Manual approval",
+        "manualBody": "Every generated post lands in pending_approval. You click Approve before publish.",
+        "autoTitle": "Auto-publish",
+        "autoBody": "Generated post goes straight to draft. Riskier — recommended after dogfood phase."
+      },
+      "review": {
+        "label": "Review & create",
+        "sectionBasics": "Basics",
+        "sectionVoice": "Voice & guards",
+        "sectionVoc": "Customer voice",
+        "sectionSeo": "SEO",
+        "sectionOps": "Operations",
+        "name": "Name",
+        "slug": "Slug",
+        "website": "Website",
+        "industry": "Industry",
+        "language": "Language",
+        "description": "Description",
+        "brandVoice": "Brand voice",
+        "tone": "Tone",
+        "voiceArticles": "Voice articles",
+        "articleCount": "{count, plural, one {# article} other {# articles}}",
+        "forbidden": "Forbidden",
+        "required": "Required",
+        "painPoints": "Pain points",
+        "desiredOutcomes": "Desired outcomes",
+        "quoteCount": "{count, plural, one {# quote} other {# quotes}}",
+        "triggers": "Triggers",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "approvalMode": "Approval mode"
+      }
+    }
+  }
+}

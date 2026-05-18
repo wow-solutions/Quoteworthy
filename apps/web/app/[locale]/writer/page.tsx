@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { getBrandFromRequest } from "@/lib/get-brand";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/shell/top-bar";
@@ -66,6 +67,8 @@ export default async function WriterPage({ searchParams }: PageProps) {
   const accountDisplayName = account?.display_name ?? "";
   const userInitials = makeInitials(accountDisplayName);
 
+  const t = await getTranslations("writer");
+
   return (
     <div
       style={{
@@ -79,7 +82,7 @@ export default async function WriterPage({ searchParams }: PageProps) {
       <TopBar
         brands={switcherBrands}
         currentBrandId={brand.id}
-        breadcrumbSection="Writer"
+        breadcrumbSection={t("breadcrumb")}
         userInitials={userInitials}
         newPostHref={`/writer?brand=${brand.id}`}
       />

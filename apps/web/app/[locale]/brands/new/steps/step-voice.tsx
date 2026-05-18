@@ -1,6 +1,7 @@
 "use client";
 
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
@@ -22,6 +23,7 @@ import {
 
 export function StepVoice() {
   const { control, watch, setValue } = useFormContext<WizardData>();
+  const t = useTranslations("wizard.steps.voice");
   const samples = watch("voice_samples") ?? [];
   const { fields, append, remove } = useFieldArray({
     control,
@@ -45,18 +47,14 @@ export function StepVoice() {
         name="tone_attributes"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Tone attributes</FormLabel>
-            <FormDescription>
-              Short adjectives that describe how the brand sounds. Enter or
-              comma to add. Examples: professional, warm, no-nonsense, witty.
-              Max 8 — fewer is usually better.
-            </FormDescription>
+            <FormLabel>{t("toneLabel")}</FormLabel>
+            <FormDescription>{t("toneDescription")}</FormDescription>
             <FormControl>
               <TagInput
                 value={field.value ?? []}
                 onChange={field.onChange}
                 max={8}
-                placeholder="professional, warm, authoritative"
+                placeholder={t("tonePlaceholder")}
               />
             </FormControl>
             <FormMessage />
@@ -69,16 +67,13 @@ export function StepVoice() {
         name="brand_voice"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Brand voice in one sentence (optional)</FormLabel>
-            <FormDescription>
-              How would you describe the voice if you had to explain it to a
-              new hire in one breath? Skip if the articles below say it for you.
-            </FormDescription>
+            <FormLabel>{t("voiceLabel")}</FormLabel>
+            <FormDescription>{t("voiceDescription")}</FormDescription>
             <FormControl>
               <Textarea
                 rows={2}
                 maxLength={500}
-                placeholder="Like a senior engineer talking to peers — direct, technical, zero fluff."
+                placeholder={t("voicePlaceholder")}
                 {...field}
               />
             </FormControl>
@@ -88,14 +83,12 @@ export function StepVoice() {
       />
 
       <div>
-        <FormLabel className="text-base">Voice articles</FormLabel>
+        <FormLabel className="text-base">{t("articlesLabel")}</FormLabel>
         <FormDescription className="mt-1 mb-3">
-          Paste up to {MAX_VOICE_ARTICLES} pieces of real writing that already
-          sound like this brand — a blog post, LinkedIn essay, newsletter, even
-          a long sales email. The AI will mirror this style when generating new
-          posts. Up to {MAX_VOICE_WORDS.toLocaleString()} words per article —
-          anything longer is trimmed automatically. The more you give us, the
-          better — but the first article is the most important.
+          {t("articlesDescription", {
+            maxArticles: MAX_VOICE_ARTICLES,
+            maxWords: MAX_VOICE_WORDS.toLocaleString(),
+          })}
         </FormDescription>
 
         <div className="space-y-3">
@@ -114,12 +107,12 @@ export function StepVoice() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Article {idx + 1}
+                        {t("articleNumber", { n: idx + 1 })}
                       </FormLabel>
                       <FormControl>
                         <Textarea
                           rows={10}
-                          placeholder="Paste the full text of one article here…"
+                          placeholder={t("articlePlaceholder")}
                           {...field}
                           onChange={(e) => onArticleChange(idx, e.target.value)}
                         />
@@ -130,10 +123,13 @@ export function StepVoice() {
                 />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>
-                    {wc.toLocaleString()} / {MAX_VOICE_WORDS.toLocaleString()} words
+                    {t("wordCount", {
+                      current: wc.toLocaleString(),
+                      max: MAX_VOICE_WORDS.toLocaleString(),
+                    })}
                     {overLimit && (
                       <span className="ml-2 text-amber-500">
-                        · trimmed to {MAX_VOICE_WORDS.toLocaleString()}
+                        {t("trimmedSuffix", { max: MAX_VOICE_WORDS.toLocaleString() })}
                       </span>
                     )}
                   </span>
@@ -143,7 +139,7 @@ export function StepVoice() {
                     size="sm"
                     onClick={() => remove(idx)}
                   >
-                    Remove
+                    {t("remove")}
                   </Button>
                 </div>
               </div>
@@ -156,15 +152,12 @@ export function StepVoice() {
               variant="outline"
               onClick={() => append({ text: "", source: "manual" })}
             >
-              + Add article ({fields.length} / {MAX_VOICE_ARTICLES})
+              {t("addArticle", { current: fields.length, max: MAX_VOICE_ARTICLES })}
             </Button>
           )}
 
           {fields.length === 0 && (
-            <p className="text-xs text-muted-foreground">
-              No articles yet. Skipping is OK — generation will fall back to
-              tone attributes alone, but quality will be lower.
-            </p>
+            <p className="text-xs text-muted-foreground">{t("noArticlesHint")}</p>
           )}
         </div>
       </div>

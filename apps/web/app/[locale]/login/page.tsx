@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ type PageProps = {
 
 export default async function LoginPage({ searchParams }: PageProps) {
   const { error, message } = await searchParams;
+  const t = await getTranslations("auth.login");
 
   return (
     <main
@@ -55,7 +57,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
             marginBottom: 6,
           }}
         >
-          Log in
+          {t("title")}
         </h1>
         <p
           style={{
@@ -67,14 +69,14 @@ export default async function LoginPage({ searchParams }: PageProps) {
             marginBottom: 24,
           }}
         >
-          Content AI wants to quote.
+          {t("tagline")}
         </p>
 
         {message && <Banner kind="pass">{message}</Banner>}
         {error && <Banner kind="risky">{error}</Banner>}
 
         <form action={login} style={{ display: "grid", gap: 14 }}>
-          <Field id="email" label="Email">
+          <Field id="email" label={t("email")}>
             <Input
               id="email"
               name="email"
@@ -83,7 +85,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
               autoComplete="email"
             />
           </Field>
-          <Field id="password" label="Password">
+          <Field id="password" label={t("password")}>
             <Input
               id="password"
               name="password"
@@ -93,7 +95,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
             />
           </Field>
           <Button type="submit" className="w-full mt-2 h-9">
-            Log in
+            {t("submit")}
           </Button>
         </form>
 
@@ -105,12 +107,12 @@ export default async function LoginPage({ searchParams }: PageProps) {
             textAlign: "center",
           }}
         >
-          No account?{" "}
+          {t("noAccount")}{" "}
           <Link
             href="/signup"
             style={{ color: "var(--info)", textDecoration: "none" }}
           >
-            Sign up
+            {t("signupLink")}
           </Link>
         </p>
       </div>
