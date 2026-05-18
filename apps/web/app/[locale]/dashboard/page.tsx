@@ -195,8 +195,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 labels={{
                   newBadge: t("card.newBadge"),
                   writer: t("card.writer"),
-                  postsSoon: t("card.postsSoon"),
-                  postsSoonTooltip: t("card.postsSoonTooltip"),
+                  posts: t("card.posts"),
                   connections: t("card.connections"),
                 }}
               />
@@ -224,8 +223,7 @@ function BrandCard({
   labels: {
     newBadge: string;
     writer: string;
-    postsSoon: string;
-    postsSoonTooltip: string;
+    posts: string;
     connections: string;
   };
 }) {
@@ -336,19 +334,25 @@ function BrandCard({
         >
           {labels.writer}
         </Link>
-        <span
-          title={labels.postsSoonTooltip}
+        <Link
+          href={`/posts?brand=${brand.id}`}
           style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 11,
-            color: "var(--ink-faint)",
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            cursor: "not-allowed",
+            height: 28,
+            padding: "0 10px",
+            background: "transparent",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: 6,
+            fontSize: 13,
+            fontWeight: 500,
+            color: "var(--ink-muted)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            textDecoration: "none",
           }}
         >
-          {labels.postsSoon}
-        </span>
+          {labels.posts}
+        </Link>
         <Link
           href={`/brands/${brand.id}`}
           style={{

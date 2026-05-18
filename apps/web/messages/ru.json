@@ -54,8 +54,7 @@
     "card": {
       "newBadge": "Новый",
       "writer": "Редактор →",
-      "postsSoon": "Посты · скоро",
-      "postsSoonTooltip": "Список постов — скоро",
+      "posts": "Посты →",
       "connections": "Подключения →"
     }
   },
@@ -194,6 +193,48 @@
       "list": "Список",
       "link": "Ссылка",
       "editorSoon": "Tiptap · Sprint 2"
+    }
+  },
+  "posts": {
+    "breadcrumb": "Посты",
+    "title": "Ваши посты",
+    "subtitle": "{count, plural, =0 {постов пока нет} one {# пост} few {# поста} many {# постов} other {# поста}}",
+    "filter": {
+      "all": "Все",
+      "draft": "Черновики",
+      "pending_approval": "На одобрении",
+      "published": "Опубликованные"
+    },
+    "status": {
+      "draft": "Черновик",
+      "pending_approval": "На одобрении",
+      "published": "Опубликован"
+    },
+    "scoreLabel": "оценка {score}/100",
+    "openAction": "Открыть →",
+    "viewOnLinkedIn": "Открыть в LinkedIn ↗",
+    "emptyContent": "(пусто)",
+    "empty": {
+      "title": "Постов пока нет.",
+      "body": "Сгенерируй первый пост в редакторе — он появится здесь.",
+      "cta": "На дашборд"
+    },
+    "detail": {
+      "breadcrumb": "Пост",
+      "backToList": "← Все посты",
+      "score": "· оценка {score}/100",
+      "publishedAt": "Опубликован {date}",
+      "createdAt": "Создан {date}",
+      "viewOnLinkedIn": "Открыть в LinkedIn ↗",
+      "publishNow": "Опубликовать сейчас →",
+      "publishing": "Публикуем…",
+      "networkError": "Сетевая ошибка",
+      "reconnect": "переподключи LinkedIn",
+      "status": {
+        "draft": "Черновик",
+        "pending_approval": "На одобрении",
+        "published": "Опубликован"
+      }
     }
   },
   "wizard": {

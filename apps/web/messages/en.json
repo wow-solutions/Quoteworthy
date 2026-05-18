@@ -54,8 +54,7 @@
     "card": {
       "newBadge": "New",
       "writer": "Writer →",
-      "postsSoon": "Posts · soon",
-      "postsSoonTooltip": "Posts list — coming next",
+      "posts": "Posts →",
       "connections": "Connections →"
     }
   },
@@ -194,6 +193,48 @@
       "list": "List",
       "link": "Link",
       "editorSoon": "Tiptap · Sprint 2"
+    }
+  },
+  "posts": {
+    "breadcrumb": "Posts",
+    "title": "Your posts",
+    "subtitle": "{count, plural, =0 {no posts yet} one {# post} other {# posts}}",
+    "filter": {
+      "all": "All",
+      "draft": "Drafts",
+      "pending_approval": "Pending",
+      "published": "Published"
+    },
+    "status": {
+      "draft": "Draft",
+      "pending_approval": "Pending",
+      "published": "Published"
+    },
+    "scoreLabel": "score {score}/100",
+    "openAction": "Open →",
+    "viewOnLinkedIn": "Open on LinkedIn ↗",
+    "emptyContent": "(empty)",
+    "empty": {
+      "title": "No posts yet.",
+      "body": "Generate your first post in the Writer and it will appear here.",
+      "cta": "Go to dashboard"
+    },
+    "detail": {
+      "breadcrumb": "Post",
+      "backToList": "← All posts",
+      "score": "· score {score}/100",
+      "publishedAt": "Published {date}",
+      "createdAt": "Created {date}",
+      "viewOnLinkedIn": "Open on LinkedIn ↗",
+      "publishNow": "Publish now →",
+      "publishing": "Publishing…",
+      "networkError": "Network error",
+      "reconnect": "reconnect LinkedIn",
+      "status": {
+        "draft": "Draft",
+        "pending_approval": "Pending",
+        "published": "Published"
+      }
     }
   },
   "wizard": {
