@@ -30,9 +30,5 @@ export async function signup(formData: FormData) {
     redirect(`/signup?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect(
-    `/login?message=${encodeURIComponent(
-      "Check your email to verify your account, then log in.",
-    )}`,
-  );
+  redirect(`/login?message=${encodeURIComponent("auth.messages.checkEmail")}`);
 }

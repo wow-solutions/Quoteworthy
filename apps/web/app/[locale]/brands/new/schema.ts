@@ -11,6 +11,7 @@ const SlugRegex = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
 // Bare-domain friendly URL: accepts `24clima.com`, `https://24clima.com`, or
 // empty. The action normalizes via normalizeWebsite() before DB insert.
+// Error messages use "validation.*" keys — FormMessage translates them at render.
 const WebsiteShape = z
   .string()
   .trim()
@@ -21,7 +22,7 @@ const WebsiteShape = z
       !v ||
       /^https?:\/\/.+\..+/i.test(v) ||
       /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)+(\/.*)?$/i.test(v),
-    "Looks invalid — try something like 24clima.com",
+    "validation.websiteInvalid",
   );
 
 export function normalizeWebsite(input: string | undefined | null): string | null {
@@ -33,13 +34,13 @@ export function normalizeWebsite(input: string | undefined | null): string | nul
 }
 
 export const BasicsSchema = z.object({
-  name: z.string().trim().min(1, "Required").max(80),
+  name: z.string().trim().min(1, "validation.required").max(80),
   slug: z
     .string()
     .trim()
     .min(2)
     .max(40)
-    .regex(SlugRegex, "Lowercase letters, digits, hyphens; no leading/trailing -"),
+    .regex(SlugRegex, "validation.slug"),
   website_url: WebsiteShape,
   industry: z.string().trim().max(80).optional(),
   primary_language: z.enum(LANGUAGES),
@@ -53,7 +54,7 @@ export const MAX_VOICE_ARTICLES = 3;
 export const MAX_VOICE_WORDS = 3000;
 
 const VoiceArticleSchema = z.object({
-  text: z.string().trim().min(20, "Too short to be useful").max(30_000),
+  text: z.string().trim().min(20, "validation.voiceTooShort").max(30_000),
   source: z.enum(["linkedin", "manual", "blog", "newsletter"]),
 });
 

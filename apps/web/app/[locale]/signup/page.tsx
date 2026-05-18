@@ -13,6 +13,18 @@ type PageProps = {
 export default async function SignupPage({ searchParams }: PageProps) {
   const { error } = await searchParams;
   const t = await getTranslations("auth.signup");
+  const tMsg = await getTranslations();
+
+  function translateOrRaw(value: string | undefined): string | undefined {
+    if (!value) return value;
+    if (!value.startsWith("auth.messages.")) return value;
+    try {
+      return tMsg(value as never);
+    } catch {
+      return value;
+    }
+  }
+  const displayError = translateOrRaw(error);
 
   return (
     <main
@@ -72,7 +84,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
           {t("tagline")}
         </p>
 
-        {error && (
+        {displayError && (
           <div
             style={{
               marginBottom: 16,
@@ -85,7 +97,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
               lineHeight: 1.5,
             }}
           >
-            {error}
+            {displayError}
           </div>
         )}
 

@@ -12,6 +12,7 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form"
+import { useTranslations } from "next-intl"
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
@@ -137,7 +138,21 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
 
 function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   const { error, formMessageId } = useFormField()
-  const body = error ? String(error?.message ?? "") : props.children
+  const t = useTranslations()
+  const raw = error ? String(error?.message ?? "") : props.children
+
+  // Translate "validation.*" keys; show plain strings as-is.
+  // try/catch protects against missing keys (typo, removed key, etc.).
+  const body =
+    typeof raw === "string" && raw.startsWith("validation.")
+      ? (() => {
+          try {
+            return t(raw as never)
+          } catch {
+            return raw
+          }
+        })()
+      : raw
 
   if (!body) {
     return null

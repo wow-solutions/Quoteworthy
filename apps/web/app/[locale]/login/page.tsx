@@ -13,6 +13,20 @@ type PageProps = {
 export default async function LoginPage({ searchParams }: PageProps) {
   const { error, message } = await searchParams;
   const t = await getTranslations("auth.login");
+  const tMsg = await getTranslations();
+
+  // Translate auth.messages.* keys passed via URL; show plain strings as-is.
+  function translateOrRaw(value: string | undefined): string | undefined {
+    if (!value) return value;
+    if (!value.startsWith("auth.messages.")) return value;
+    try {
+      return tMsg(value as never);
+    } catch {
+      return value;
+    }
+  }
+  const displayMessage = translateOrRaw(message);
+  const displayError = translateOrRaw(error);
 
   return (
     <main
@@ -72,8 +86,8 @@ export default async function LoginPage({ searchParams }: PageProps) {
           {t("tagline")}
         </p>
 
-        {message && <Banner kind="pass">{message}</Banner>}
-        {error && <Banner kind="risky">{error}</Banner>}
+        {displayMessage && <Banner kind="pass">{displayMessage}</Banner>}
+        {displayError && <Banner kind="risky">{displayError}</Banner>}
 
         <form action={login} style={{ display: "grid", gap: 14 }}>
           <Field id="email" label={t("email")}>

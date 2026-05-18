@@ -42,8 +42,6 @@ export async function GET(request: NextRequest) {
   }
 
   redirect(
-    `/login?error=${encodeURIComponent(
-      "Verification link missing required parameters. Try signing up again.",
-    )}`,
+    `/login?error=${encodeURIComponent("auth.messages.verifyMissingParams")}`,
   );
 }

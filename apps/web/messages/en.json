@@ -6,7 +6,17 @@
       "ru": "Русский"
     }
   },
+  "validation": {
+    "required": "Required",
+    "slug": "Lowercase letters, digits, hyphens; no leading/trailing -",
+    "websiteInvalid": "Looks invalid — try something like 24clima.com",
+    "voiceTooShort": "Too short to be useful"
+  },
   "auth": {
+    "messages": {
+      "checkEmail": "Check your email to verify your account, then log in.",
+      "verifyMissingParams": "Verification link missing required parameters. Try signing up again."
+    },
     "login": {
       "title": "Log in",
       "tagline": "Content AI wants to quote.",
