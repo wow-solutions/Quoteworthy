@@ -1,4 +1,4 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "@/i18n/routing";
@@ -15,6 +15,16 @@ const intlMiddleware = createIntlMiddleware(routing);
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // API routes are never localized. If an accidental locale prefix slipped in
+  // (e.g. an i18n <Link> wrapped an /api/* href), rewrite it back to /api/*
+  // so the route handler is actually reached. Then skip i18n entirely —
+  // only Supabase session refresh runs for /api/*.
+  const stripped = pathname.replace(/^\/[a-z]{2}(?=\/api\/)/, "");
+  if (stripped !== pathname) {
+    const url = request.nextUrl.clone();
+    url.pathname = stripped;
+    return NextResponse.rewrite(url);
+  }
   if (pathname.startsWith("/api")) {
     return updateSession(request);
   }

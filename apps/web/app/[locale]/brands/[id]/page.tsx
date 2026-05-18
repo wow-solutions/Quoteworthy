@@ -198,12 +198,13 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
 
             {linkedinToken ? (
               <div style={{ display: "flex", gap: 8 }}>
-                <Link
+                {/* Plain <a> — i18n <Link> would prefix /ru/ which breaks API routes */}
+                <a
                   href={`/api/auth/linkedin/request?brand_id=${brand.id}`}
                   style={buttonStyleSecondary()}
                 >
                   {t("linkedin.reconnect")}
-                </Link>
+                </a>
                 <form action={disconnectWithBrand.bind(null, brand.id)}>
                   <button type="submit" style={buttonStyleDanger()}>
                     {t("linkedin.disconnect")}
@@ -211,12 +212,12 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
                 </form>
               </div>
             ) : (
-              <Link
+              <a
                 href={`/api/auth/linkedin/request?brand_id=${brand.id}`}
                 style={buttonStylePrimary()}
               >
                 {t("linkedin.connect")}
-              </Link>
+              </a>
             )}
           </div>
         </div>
