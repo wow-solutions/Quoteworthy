@@ -23,6 +23,8 @@ type Stage =
   | "ready"
   | "saving"
   | "saved"
+  | "publishing"
+  | "published"
   | "error";
 
 const LINKEDIN_MAX = 3000;
@@ -54,6 +56,7 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [brandContextOpen, setBrandContextOpen] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
   const voiceShort = shortenVoice(brandConfig.brandVoice);
   const toneTop = truncateList(brandConfig.toneAttributes, 4);
@@ -68,7 +71,10 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
   const charCount = content.length;
   const overLimit = charCount > LINKEDIN_MAX;
   const busy =
-    stage === "generating" || stage === "detecting" || stage === "saving";
+    stage === "generating" ||
+    stage === "detecting" ||
+    stage === "saving" ||
+    stage === "publishing";
   const dirty = postId !== null && content !== originalContent;
 
   async function onGenerate() {
@@ -139,6 +145,47 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
       setOriginalContent(content);
       setStage("saved");
     });
+  }
+
+  async function onPublish() {
+    if (!postId) return;
+    setError(null);
+    // Save first if dirty — publish what's on screen, not what's in DB.
+    if (dirty) {
+      setStage("saving");
+      const saveResult = await saveDraft(postId, content);
+      if (!saveResult.ok) {
+        setError(saveResult.error);
+        setStage("error");
+        return;
+      }
+      setOriginalContent(content);
+    }
+
+    setStage("publishing");
+    let res: Response;
+    try {
+      res = await fetch(`/api/posts/${postId}/publish`, { method: "POST" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("networkError"));
+      setStage("error");
+      return;
+    }
+
+    const data = (await res.json().catch(() => null)) as
+      | { success?: boolean; url?: string; error?: string; needsReconnect?: boolean }
+      | null;
+
+    if (!res.ok || !data?.success) {
+      const msg = data?.error ?? `HTTP ${res.status}`;
+      const reconnectNote = data?.needsReconnect ? ` · ${t("publishReconnect")}` : "";
+      setError(`${msg}${reconnectNote}`);
+      setStage("error");
+      return;
+    }
+
+    setPublishedUrl(data.url ?? null);
+    setStage("published");
   }
 
   const generateLabel =
@@ -401,6 +448,21 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
             </span>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {publishedUrl && stage === "published" && (
+              <a
+                href={publishedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: 12,
+                  color: "var(--pass)",
+                  textDecoration: "underline",
+                  marginRight: 4,
+                }}
+              >
+                {t("publishedView")}
+              </a>
+            )}
             {postId && (
               <button
                 onClick={onSave}
@@ -411,11 +473,15 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
               </button>
             )}
             <button
-              style={primaryButton(true, 32)}
-              disabled
-              title={t("approveTooltip")}
+              onClick={onPublish}
+              disabled={!postId || busy || stage === "published"}
+              style={primaryButton(!postId || busy || stage === "published", 32)}
             >
-              {t("approve")}
+              {stage === "publishing"
+                ? t("publishing")
+                : stage === "published"
+                  ? t("published")
+                  : t("publish")}
             </button>
           </div>
         </footer>

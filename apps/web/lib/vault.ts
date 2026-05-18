@@ -23,11 +23,18 @@ export class VaultError extends Error {
 
 // Shape of LinkedIn OAuth tokens stored in Vault. Extend with other platforms
 // later (Twitter / IG / TikTok) by adding optional discriminated variants.
+//
+// user_sub is the LinkedIn member's `sub` claim (OIDC). Required to build
+// author=urn:li:person:{sub} when publishing posts. Captured at connect time
+// from /v2/userinfo. Optional in the schema so tokens issued before this
+// field existed still parse — the publisher refetches userinfo and patches
+// the Vault entry in that case.
 export const LinkedInTokenSchema = z.object({
   access_token: z.string().min(1),
   refresh_token: z.string().min(1).optional(),
   expires_at: z.string().datetime(),
   scope: z.string(),
+  user_sub: z.string().min(1).optional(),
 });
 
 export type LinkedInToken = z.infer<typeof LinkedInTokenSchema>;

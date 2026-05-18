@@ -115,11 +115,13 @@ export async function GET(request: Request): Promise<Response> {
   // Compute absolute expires_at from relative expires_in
   const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
-  // Build vault payload
+  // Build vault payload. user_sub is needed later when publishing posts —
+  // capturing here avoids an extra /v2/userinfo call on every publish.
   const vaultPayload: Record<string, string> = {
     access_token: tokens.access_token,
     expires_at: expiresAt,
     scope: tokens.scope,
+    user_sub: userInfo.sub,
   };
   if (tokens.refresh_token) {
     vaultPayload.refresh_token = tokens.refresh_token;
