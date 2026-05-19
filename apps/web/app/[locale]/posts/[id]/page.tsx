@@ -6,7 +6,8 @@ import { TopBar } from "@/components/shell/top-bar";
 import { BrandDot } from "@/components/brand/brand-dot";
 import type { BrandOption } from "@/components/brand/brand-switcher";
 import { brandColor } from "@/lib/brand-color";
-import { PublishButton } from "./publish-button";
+import { PostEditor } from "./post-editor";
+import { StatusBadge } from "../status-badge";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -88,7 +89,7 @@ export default async function PostDetailPage({ params }: PageProps) {
           <span style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>
             {brand?.name ?? "—"}
           </span>
-          <StatusBadge status={post.status} t={t} />
+          <StatusBadge status={post.status} label={t(`status.${post.status}`)} />
           <span
             style={{
               fontFamily: "var(--font-mono)",
@@ -121,88 +122,14 @@ export default async function PostDetailPage({ params }: PageProps) {
           {post.status === "published" ? t("publishedAt", { date: dateStr }) : t("createdAt", { date: dateStr })}
         </p>
 
-        {/* Content */}
-        <article
-          style={{
-            background: "var(--surface)",
-            border: "1px solid var(--border-subtle)",
-            borderRadius: 8,
-            padding: "20px 24px",
-            marginBottom: 24,
-          }}
-        >
-          <pre
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: 15,
-              lineHeight: 1.65,
-              color: "var(--ink)",
-              margin: 0,
-              whiteSpace: "pre-wrap",
-              overflowWrap: "anywhere",
-            }}
-          >
-            {post.content_text || ""}
-          </pre>
-        </article>
-
-        {/* Actions */}
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          {post.status === "published" && post.external_post_url ? (
-            <a
-              href={post.external_post_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                height: 36,
-                padding: "0 16px",
-                background: "var(--ink)",
-                color: "var(--bg)",
-                border: "1px solid var(--ink)",
-                borderRadius: 6,
-                fontSize: 13,
-                fontWeight: 500,
-                textDecoration: "none",
-              }}
-            >
-              {t("viewOnLinkedIn")}
-            </a>
-          ) : (
-            <PublishButton postId={post.id} />
-          )}
-        </div>
+        <PostEditor
+          postId={post.id}
+          initialContent={post.content_text ?? ""}
+          status={post.status}
+          externalUrl={post.external_post_url}
+        />
       </section>
     </div>
-  );
-}
-
-function StatusBadge({ status, t }: { status: string; t: (k: string) => string }) {
-  const styles =
-    status === "published"
-      ? { bg: "var(--pass-bg)", color: "var(--pass)", border: "rgba(122,160,121,0.30)" }
-      : status === "pending_approval"
-        ? { bg: "var(--borderline-bg)", color: "var(--borderline)", border: "rgba(201,166,107,0.30)" }
-        : { bg: "var(--raised)", color: "var(--ink-muted)", border: "var(--border-subtle)" };
-
-  return (
-    <span
-      style={{
-        fontFamily: "var(--font-mono)",
-        fontSize: 10,
-        textTransform: "uppercase",
-        letterSpacing: "0.1em",
-        background: styles.bg,
-        color: styles.color,
-        border: `1px solid ${styles.border}`,
-        padding: "2px 8px",
-        borderRadius: 4,
-        fontWeight: 500,
-      }}
-    >
-      {t(`status.${status}`)}
-    </span>
   );
 }
 

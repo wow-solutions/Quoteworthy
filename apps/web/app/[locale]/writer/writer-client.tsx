@@ -250,21 +250,21 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
           {toneTop.shown.length > 0 && (
             <BrandSummaryRow
               label={t("rowTone")}
-              value={formatList(toneTop, t("moreSuffix"))}
+              value={formatList(toneTop, t.raw("moreSuffix") as string)}
               title={brandConfig.toneAttributes.join(" · ")}
             />
           )}
           {avoidTop.shown.length > 0 && (
             <BrandSummaryRow
               label={t("rowAvoid")}
-              value={formatList(avoidTop, t("moreSuffix"))}
+              value={formatList(avoidTop, t.raw("moreSuffix") as string)}
               title={brandConfig.forbiddenWords.join(" · ")}
             />
           )}
           {topicsTop.shown.length > 0 && (
             <BrandSummaryRow
               label={t("rowTopics")}
-              value={formatList(topicsTop, t("moreSuffix"))}
+              value={formatList(topicsTop, t.raw("moreSuffix") as string)}
               valueColor="var(--info)"
               title={brandConfig.seoKeywords.join(" · ")}
             />

@@ -3,9 +3,8 @@ import { redirect } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/shell/top-bar";
-import { BrandDot } from "@/components/brand/brand-dot";
 import type { BrandOption } from "@/components/brand/brand-switcher";
-import { brandColor } from "@/lib/brand-color";
+import { PostsList, type PostRow } from "./posts-list";
 
 type PageProps = {
   searchParams: Promise<{ status?: string; brand?: string }>;
@@ -30,7 +29,6 @@ export default async function PostsPage({ searchParams }: PageProps) {
   const t = await getTranslations("posts");
   const locale = await getLocale();
 
-  // Fetch brands for switcher + name lookup
   const { data: brandsList } = await supabase
     .from("brands")
     .select("id, name, slug")
@@ -40,7 +38,6 @@ export default async function PostsPage({ searchParams }: PageProps) {
   const brands = brandsList ?? [];
   const brandById = new Map(brands.map((b) => [b.id, b]));
 
-  // Fetch posts (RLS-scoped — user sees only own brand posts)
   let q = supabase
     .from("posts")
     .select(
@@ -57,6 +54,23 @@ export default async function PostsPage({ searchParams }: PageProps) {
   }
   const { data: posts } = await q;
   const list = posts ?? [];
+
+  const enriched: PostRow[] = list.map((p) => {
+    const brand = brandById.get(p.brand_id);
+    return {
+      id: p.id,
+      brandId: p.brand_id,
+      brandName: brand?.name ?? "—",
+      brandSlug: brand?.slug ?? null,
+      platform: p.platform,
+      contentText: p.content_text,
+      status: p.status,
+      detectionScore: p.detection_score,
+      externalPostUrl: p.external_post_url,
+      createdAt: p.created_at,
+      publishedAt: p.published_at,
+    };
+  });
 
   const switcherBrands: BrandOption[] = brands.map((b) => ({
     id: b.id,
@@ -144,159 +158,10 @@ export default async function PostsPage({ searchParams }: PageProps) {
         {list.length === 0 ? (
           <EmptyState title={t("empty.title")} body={t("empty.body")} cta={t("empty.cta")} />
         ) : (
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
-            {list.map((p) => {
-              const brand = brandById.get(p.brand_id);
-              const color = brand ? brandColor(brand.slug) : "var(--ink-faint)";
-              const dateStr = formatDate(
-                p.published_at ?? p.created_at,
-                locale,
-              );
-              const preview = (p.content_text ?? "").slice(0, 140).trim();
-
-              return (
-                <li
-                  key={p.id}
-                  style={{
-                    background: "var(--surface)",
-                    border: "1px solid var(--border-subtle)",
-                    borderRadius: 8,
-                    padding: "14px 16px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      marginBottom: 8,
-                    }}
-                  >
-                    <BrandDot color={color} size={8} />
-                    <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>
-                      {brand?.name ?? "—"}
-                    </span>
-                    <StatusBadge status={p.status} t={t} />
-                    <span
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 11,
-                        color: "var(--ink-faint)",
-                      }}
-                    >
-                      {p.platform.toUpperCase()}
-                    </span>
-                    {p.detection_score !== null && (
-                      <span
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: 11,
-                          color: "var(--ink-faint)",
-                        }}
-                      >
-                        · {t("scoreLabel", { score: p.detection_score })}
-                      </span>
-                    )}
-                    <span
-                      style={{
-                        marginLeft: "auto",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 11,
-                        color: "var(--ink-faint)",
-                      }}
-                    >
-                      {dateStr}
-                    </span>
-                  </div>
-
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: "var(--ink-muted)",
-                      lineHeight: 1.5,
-                      margin: "0 0 12px",
-                      overflowWrap: "anywhere",
-                    }}
-                  >
-                    {preview || <em>{t("emptyContent")}</em>}
-                    {(p.content_text?.length ?? 0) > 140 && "…"}
-                  </p>
-
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <Link
-                      href={`/posts/${p.id}`}
-                      style={{
-                        height: 26,
-                        padding: "0 10px",
-                        borderRadius: 4,
-                        border: "1px solid var(--border-subtle)",
-                        background: "transparent",
-                        color: "var(--ink)",
-                        fontSize: 12,
-                        fontWeight: 500,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        textDecoration: "none",
-                      }}
-                    >
-                      {t("openAction")}
-                    </Link>
-                    {p.external_post_url && (
-                      <a
-                        href={p.external_post_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          fontSize: 12,
-                          color: "var(--info)",
-                          textDecoration: "underline",
-                        }}
-                      >
-                        {t("viewOnLinkedIn")}
-                      </a>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <PostsList posts={enriched} locale={locale} />
         )}
       </section>
     </div>
-  );
-}
-
-function StatusBadge({
-  status,
-  t,
-}: {
-  status: string;
-  t: (k: string) => string;
-}) {
-  const styles =
-    status === "published"
-      ? { bg: "var(--pass-bg)", color: "var(--pass)", border: "rgba(122,160,121,0.30)" }
-      : status === "pending_approval"
-        ? { bg: "var(--borderline-bg)", color: "var(--borderline)", border: "rgba(201,166,107,0.30)" }
-        : { bg: "var(--raised)", color: "var(--ink-muted)", border: "var(--border-subtle)" };
-
-  return (
-    <span
-      style={{
-        fontFamily: "var(--font-mono)",
-        fontSize: 10,
-        textTransform: "uppercase",
-        letterSpacing: "0.1em",
-        background: styles.bg,
-        color: styles.color,
-        border: `1px solid ${styles.border}`,
-        padding: "2px 8px",
-        borderRadius: 4,
-        fontWeight: 500,
-      }}
-    >
-      {t(`status.${status}`)}
-    </span>
   );
 }
 
@@ -347,17 +212,4 @@ function EmptyState({ title, body, cta }: { title: string; body: string; cta: st
       </Link>
     </div>
   );
-}
-
-function formatDate(iso: string, locale: string): string {
-  try {
-    const d = new Date(iso);
-    return d.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
 }

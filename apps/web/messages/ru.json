@@ -216,6 +216,15 @@
     },
     "scoreLabel": "оценка {score}/100",
     "openAction": "Открыть →",
+    "deleteAction": "Удалить",
+    "bulkQuickSelect": "Быстрый выбор:",
+    "bulkAllDrafts": "Все черновики ({count})",
+    "bulkAllPending": "Все на одобрении ({count})",
+    "bulkSelected": "Выбрано: {count}",
+    "bulkDeleteAction": "Удалить выбранные ({count})",
+    "bulkDeleteConfirm": "Удалить {count} постов? Действие необратимо.",
+    "bulkClear": "Снять выбор",
+    "selectRowAria": "Выбрать пост для массового действия",
     "viewOnLinkedIn": "Открыть в LinkedIn ↗",
     "emptyContent": "(пусто)",
     "empty": {
@@ -234,6 +243,26 @@
       "publishing": "Публикуем…",
       "networkError": "Сетевая ошибка",
       "reconnect": "переподключи LinkedIn",
+      "edit": "Редактировать",
+      "save": "Сохранить",
+      "saving": "Сохраняем…",
+      "discard": "Отменить",
+      "delete": "Удалить",
+      "deleting": "Удаляем…",
+      "deleteConfirm": "Удалить этот пост? Действие необратимо.",
+      "font": {
+        "label": "Шрифт",
+        "sans": "Без засечек",
+        "serif": "С засечками",
+        "mono": "Моно"
+      },
+      "length": {
+        "short": "коротко",
+        "ok": "ок",
+        "sweet": "✓ оптимум",
+        "long": "длинно",
+        "tooLong": "слишком длинно"
+      },
       "status": {
         "draft": "Черновик",
         "pending_approval": "На одобрении",

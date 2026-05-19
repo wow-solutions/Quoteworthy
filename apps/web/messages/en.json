@@ -216,6 +216,15 @@
     },
     "scoreLabel": "score {score}/100",
     "openAction": "Open →",
+    "deleteAction": "Delete",
+    "bulkQuickSelect": "Quick select:",
+    "bulkAllDrafts": "All drafts ({count})",
+    "bulkAllPending": "All pending ({count})",
+    "bulkSelected": "{count} selected",
+    "bulkDeleteAction": "Delete selected ({count})",
+    "bulkDeleteConfirm": "Delete {count} posts? This cannot be undone.",
+    "bulkClear": "Clear",
+    "selectRowAria": "Select post for bulk action",
     "viewOnLinkedIn": "Open on LinkedIn ↗",
     "emptyContent": "(empty)",
     "empty": {
@@ -234,6 +243,26 @@
       "publishing": "Publishing…",
       "networkError": "Network error",
       "reconnect": "reconnect LinkedIn",
+      "edit": "Edit",
+      "save": "Save",
+      "saving": "Saving…",
+      "discard": "Discard",
+      "delete": "Delete",
+      "deleting": "Deleting…",
+      "deleteConfirm": "Delete this post? This cannot be undone.",
+      "font": {
+        "label": "Font",
+        "sans": "Sans",
+        "serif": "Serif",
+        "mono": "Mono"
+      },
+      "length": {
+        "short": "short",
+        "ok": "ok",
+        "sweet": "✓ sweet spot",
+        "long": "long",
+        "tooLong": "too long"
+      },
       "status": {
         "draft": "Draft",
         "pending_approval": "Pending",
