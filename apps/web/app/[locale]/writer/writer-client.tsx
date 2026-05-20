@@ -2,16 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import type { PangramResponse } from "@/lib/pangram";
-import { DetectionGauge } from "@/components/detection/detection-gauge";
-import { scoreBucket, bucketCssVar } from "@/lib/detection";
 import { saveDraft } from "./actions";
 
 type GenerateResponse = {
   post_id: string;
   content: string;
-  detection_score: number;
-  detection_breakdown: PangramResponse;
   status: "draft" | "pending_approval";
   cache_read_tokens: number;
 };
@@ -19,8 +14,8 @@ type GenerateResponse = {
 type Stage =
   | "idle"
   | "generating"
-  | "detecting"
   | "ready"
+  | "humanizing"
   | "saving"
   | "saved"
   | "publishing"
@@ -49,8 +44,6 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
   const [content, setContent] = useState("");
   const [originalContent, setOriginalContent] = useState("");
   const [postId, setPostId] = useState<string | null>(null);
-  const [score, setScore] = useState<number | null>(null);
-  const [breakdown, setBreakdown] = useState<PangramResponse | null>(null);
   const [status, setStatus] = useState<"draft" | "pending_approval" | null>(
     null,
   );
@@ -59,6 +52,8 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
   const [isPending, startTransition] = useTransition();
   const [brandContextOpen, setBrandContextOpen] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  // Snapshot of content before last humanize — drives the Undo button.
+  const [humanizeSnapshot, setHumanizeSnapshot] = useState<string | null>(null);
 
   const voiceShort = shortenVoice(brandConfig.brandVoice);
   const toneTop = truncateList(brandConfig.toneAttributes, 4);
@@ -74,7 +69,7 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
   const overLimit = charCount > LINKEDIN_MAX;
   const busy =
     stage === "generating" ||
-    stage === "detecting" ||
+    stage === "humanizing" ||
     stage === "saving" ||
     stage === "publishing";
   const dirty = postId !== null && content !== originalContent;
@@ -83,8 +78,6 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
     setError(null);
     setStage("generating");
     setPostId(null);
-    setScore(null);
-    setBreakdown(null);
     setStatus(null);
 
     const payload: { brand_id: string; topic_hint?: string; source_text?: string } = {
@@ -130,13 +123,10 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
       return;
     }
 
-    setStage("detecting");
     const data = (await res.json()) as GenerateResponse;
     setContent(data.content);
     setOriginalContent(data.content);
     setPostId(data.post_id);
-    setScore(data.detection_score);
-    setBreakdown(data.detection_breakdown);
     setStatus(data.status);
     setStage("ready");
     if (!title) {
@@ -159,6 +149,51 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
       setOriginalContent(content);
       setStage("saved");
     });
+  }
+
+  async function onHumanize() {
+    if (!content.trim()) return;
+    setError(null);
+    const snapshot = content;
+    setStage("humanizing");
+
+    let res: Response;
+    try {
+      res = await fetch("/api/posts/humanize", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: content, brand_id: brandId }),
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("networkError"));
+      setStage("error");
+      return;
+    }
+
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as
+        | { error?: unknown }
+        | null;
+      const errText =
+        data && typeof data.error === "string" && data.error
+          ? data.error
+          : `HTTP ${res.status}`;
+      setError(errText);
+      setStage("error");
+      return;
+    }
+
+    const data = (await res.json()) as { text: string };
+    // Commit only on success: snapshot stored, content swapped.
+    setHumanizeSnapshot(snapshot);
+    setContent(data.text);
+    setStage("ready");
+  }
+
+  function onUndoHumanize() {
+    if (humanizeSnapshot === null) return;
+    setContent(humanizeSnapshot);
+    setHumanizeSnapshot(null);
   }
 
   async function onPublish() {
@@ -205,17 +240,15 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
   const generateLabel =
     stage === "generating"
       ? t("generating")
-      : stage === "detecting"
-        ? t("checkingDetection")
-        : postId
-          ? t("regenerate")
-          : t("generate");
+      : postId
+        ? t("regenerate")
+        : t("generate");
 
   return (
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "var(--writer-left-w) 1fr var(--writer-right-w)",
+        gridTemplateColumns: "var(--writer-left-w) 1fr",
         overflow: "hidden",
         minHeight: 0,
       }}
@@ -396,12 +429,6 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
           >
             <span style={mono(11, "var(--ink-faint)")}>
               Claude Sonnet 4.6
-              {breakdown && (
-                <>
-                  {" · "}
-                  Pangram v3
-                </>
-              )}
             </span>
           </div>
         </Section>
@@ -528,6 +555,26 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
                 {t("publishedView")}
               </a>
             )}
+            {humanizeSnapshot !== null && (
+              <button
+                onClick={onUndoHumanize}
+                disabled={busy}
+                style={secondaryButton(busy)}
+                title={t("undoTooltip")}
+              >
+                {t("undo")}
+              </button>
+            )}
+            {postId && (
+              <button
+                onClick={onHumanize}
+                disabled={busy || !content.trim()}
+                style={secondaryButton(busy || !content.trim())}
+                title={t("rehumanizeTooltip")}
+              >
+                {stage === "humanizing" ? t("humanizing") : t("rehumanize")}
+              </button>
+            )}
             {postId && (
               <button
                 onClick={onSave}
@@ -551,159 +598,6 @@ export function WriterClient({ brandId, brandName, brandConfig }: Props) {
           </div>
         </footer>
       </main>
-
-      {/* RIGHT — Detection Pass panel */}
-      <aside
-        style={{
-          borderLeft: "1px solid var(--border-subtle)",
-          background: "var(--bg)",
-          display: "flex",
-          flexDirection: "column",
-          overflowY: "auto",
-        }}
-      >
-        <div
-          style={{
-            padding: "24px 20px 12px",
-            textAlign: "center",
-            borderBottom: "1px solid var(--border-subtle)",
-          }}
-        >
-          <div
-            style={{
-              ...caption(),
-              marginBottom: 8,
-            }}
-          >
-            {t("scoreTitle")}
-          </div>
-          <div style={{ display: "grid", placeItems: "center" }}>
-            <DetectionGauge score={score} size="md" />
-          </div>
-          <div
-            style={{
-              marginTop: 8,
-              ...mono(11, "var(--ink-faint)"),
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-            }}
-          >
-            {score === null ? t("scoreEmpty") : t("scoreFresh")}
-          </div>
-        </div>
-
-        <Section
-          title={t("perDetector")}
-          right={
-            <span style={mono(10, "var(--ink-faint)")}>{t("aiProbHint")}</span>
-          }
-        >
-          <DetectorRow
-            name="Pangram"
-            sub="v3 · weight 1.0"
-            score={breakdown ? breakdown.fraction_ai : null}
-          />
-          <DetectorRow
-            name="GPTZero"
-            sub={t("notConfigured")}
-            score={null}
-            faded
-          />
-          <DetectorRow
-            name="Originality.ai"
-            sub={t("notConfigured")}
-            score={null}
-            faded
-          />
-        </Section>
-
-        {breakdown && (
-          <Section title={t("breakdown")}>
-            <div
-              style={{
-                fontSize: 13,
-                color: "var(--ink-muted)",
-                lineHeight: 1.5,
-                marginBottom: 10,
-              }}
-            >
-              {breakdown.headline}
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr",
-                gap: 10,
-              }}
-            >
-              <Stat label={t("statAi")} value={breakdown.num_ai_segments} />
-              <Stat label={t("statAssisted")} value={breakdown.num_ai_assisted_segments} />
-              <Stat label={t("statHuman")} value={breakdown.num_human_segments} />
-            </div>
-          </Section>
-        )}
-
-        <Section
-          title={t("flaggedSpans")}
-          right={<span style={mono(11, "var(--ink-faint)")}>0</span>}
-        >
-          <div
-            style={{
-              ...mono(12, "var(--ink-faint)"),
-              padding: "16px 4px",
-              textAlign: "center",
-              letterSpacing: "0.06em",
-            }}
-          >
-            {t("flaggedSoon")}
-          </div>
-        </Section>
-
-        <Section
-          title={t("runHistory")}
-          right={<span style={mono(11, "var(--ink-faint)")}>1</span>}
-        >
-          {score !== null ? (
-            <HistoryRow
-              when={t("historyFirst")}
-              score={score}
-              isLatest
-            />
-          ) : (
-            <div
-              style={{
-                ...mono(12, "var(--ink-faint)"),
-                padding: "12px 4px",
-                letterSpacing: "0.06em",
-              }}
-            >
-              {t("noRuns")}
-            </div>
-          )}
-        </Section>
-
-        <Section>
-          <button
-            disabled
-            style={secondaryButton(true, 40)}
-            title={t("rehumanizeTooltip")}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              style={{ marginRight: 6 }}
-            >
-              <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
-              <path d="M21 3v5h-5" />
-            </svg>
-            {t("rehumanize")}
-          </button>
-        </Section>
-      </aside>
     </div>
   );
 }
@@ -1047,150 +941,6 @@ function Toolbar() {
       >
         {t("editorSoon")}
       </span>
-    </div>
-  );
-}
-
-function DetectorRow({
-  name,
-  sub,
-  score,
-  faded,
-}: {
-  name: string;
-  sub: string;
-  score: number | null;
-  faded?: boolean;
-}) {
-  const fraction = score === null ? 0 : Math.max(0, Math.min(1, score));
-  const bucket = score === null ? "risky" : scoreBucket(100 * (1 - fraction));
-  const color = score === null ? "var(--ink-faint)" : bucketCssVar(bucket);
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr auto",
-        alignItems: "center",
-        gap: 10,
-        padding: "8px 0",
-        opacity: faded ? 0.55 : 1,
-      }}
-    >
-      <div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>
-          {name}
-        </div>
-        <div
-          style={{
-            ...mono(10, "var(--ink-faint)"),
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            marginTop: 2,
-          }}
-        >
-          {sub}
-        </div>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div
-          style={{
-            width: 80,
-            height: 4,
-            background: "var(--raised)",
-            borderRadius: 999,
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              width: `${fraction * 100}%`,
-              height: "100%",
-              background: color,
-              borderRadius: 999,
-              transition: "width 600ms cubic-bezier(0.16,1,0.3,1)",
-            }}
-          />
-        </div>
-        <span
-          style={{
-            ...mono(12, "var(--ink)"),
-            minWidth: 32,
-            textAlign: "right",
-            fontVariantNumeric: "tabular-nums",
-          }}
-        >
-          {score === null ? "—" : fraction.toFixed(2)}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function HistoryRow({
-  when,
-  score,
-  isLatest,
-}: {
-  when: string;
-  score: number;
-  isLatest?: boolean;
-}) {
-  const bucket = scoreBucket(score);
-  const color = bucketCssVar(bucket);
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "12px 1fr auto",
-        gap: 10,
-        alignItems: "center",
-        padding: "10px 0",
-      }}
-    >
-      <span
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          background: color,
-          ...(isLatest ? { boxShadow: "0 0 0 2px var(--bg)" } : {}),
-        }}
-      />
-      <span style={mono(11, "var(--ink-faint)")}>{when}</span>
-      <span
-        style={{
-          ...mono(13, color),
-          fontWeight: 500,
-        }}
-      >
-        {score}
-      </span>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <div
-        style={{
-          ...mono(10, "var(--ink-faint)"),
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          marginBottom: 4,
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          ...mono(15, "var(--ink)"),
-          fontVariantNumeric: "tabular-nums",
-          fontWeight: 500,
-        }}
-      >
-        {value}
-      </div>
     </div>
   );
 }

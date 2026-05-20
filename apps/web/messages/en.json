@@ -19,7 +19,7 @@
     },
     "login": {
       "title": "Log in",
-      "tagline": "Content AI wants to quote.",
+      "tagline": "Your voice. Every platform. On schedule.",
       "email": "Email",
       "password": "Password",
       "submit": "Log in",
@@ -84,40 +84,40 @@
       "signup": "Sign up"
     },
     "hero": {
-      "eyebrow": "Detection-aware content AI",
-      "h1": "Posts your clients can actually publish.",
-      "tagline": "Content AI wants to quote.",
-      "body": "Quoteworthy generates LinkedIn and blog posts in your client's voice — Pangram-verified to pass AI detection. Built for boutique agencies juggling many brands at once.",
+      "eyebrow": "Content automation, in your voice",
+      "h1": "Your voice. Every platform. On schedule.",
+      "tagline": "One idea, every platform, in your voice.",
+      "body": "Quoteworthy turns one idea into platform-fit posts in your brand voice — LinkedIn long-form, Twitter threads, blog posts — and ships them on the schedule you set. Pennies per post.",
       "signup": "Sign up",
       "alreadyHave": "Already have an account →"
     },
     "problem": {
-      "eyebrow": "The 2026 penalty",
-      "h2": "LinkedIn now penalizes AI-detected posts.",
-      "stat1": { "number": "−30%", "label": "reach on detected posts" },
-      "stat2": { "number": "−55%", "label": "engagement loss" },
-      "stat3": { "number": "1 in 4", "label": "AI posts flagged" },
-      "body": "Agency clients can't afford the haircut. Generic AI tools fail detection because they all sound the same. Quoteworthy is built around the detector, not despite it."
+      "eyebrow": "Why this exists",
+      "h2": "Content dies the day operations get loud.",
+      "stat1": { "number": "2 → 15", "label": "posts/month after automation" },
+      "stat2": { "number": "8×", "label": "site impressions, month one" },
+      "stat3": { "number": "$0.18", "label": "cost per article" },
+      "body": "Service-business founders pick operations over content every Monday. The blank page always loses. We hit this at our own HVAC business in Panama, then built the engine: one source idea → platform-fit drafts → scheduled publish. Quoteworthy is that engine."
     },
     "how": {
       "eyebrow": "How it works",
-      "h2": "Three steps from brand to publishable post.",
+      "h2": "Three steps from idea to published post.",
       "step1": {
-        "title": "Define brand voice",
-        "body": "A short wizard captures each client's tone, audience, and vocabulary. Five minutes per brand, once."
+        "title": "Capture your voice",
+        "body": "A short wizard pulls tone, audience, and vocabulary from your existing writing. Five minutes, once."
       },
       "step2": {
-        "title": "Generate posts",
-        "body": "One button. Quoteworthy writes in the brand's voice — not generic-LLM voice. Edit inline if you want."
+        "title": "Generate per platform",
+        "body": "One topic, one click. Get a LinkedIn long-form, a Twitter thread, a blog post — all in your voice, each formatted for its platform."
       },
       "step3": {
-        "title": "See Detection Pass Score",
-        "body": "Every draft is scored by Pangram before you ship. Green means safe to publish."
+        "title": "Schedule and ship",
+        "body": "Set a cadence. Connect your accounts. We post when you said, where you said."
       }
     },
     "finalCta": {
       "eyebrow": "Get started",
-      "h2": "Start writing posts that pass.",
+      "h2": "Stop publishing in bursts.",
       "body": "Free during pre-alpha. No card required.",
       "signup": "Sign up",
       "github": "View on GitHub →"
@@ -132,7 +132,6 @@
     "breadcrumb": "Writer",
     "networkError": "Network error",
     "generating": "Generating draft… ~5s",
-    "checkingDetection": "Checking detection… ~5s",
     "regenerate": "Regenerate",
     "generate": "Generate",
     "brandContext": "Brand context",
@@ -172,23 +171,11 @@
     "published": "Published ✓",
     "publishedView": "View on LinkedIn ↗",
     "publishReconnect": "reconnect LinkedIn and retry",
-    "scoreTitle": "Detection Pass Score",
-    "scoreEmpty": "Run Generate to score",
-    "scoreFresh": "Pangram · last run just now",
-    "perDetector": "Per-detector",
-    "aiProbHint": "AI prob · lower = better",
-    "notConfigured": "not configured",
-    "breakdown": "Pangram breakdown",
-    "statAi": "AI seg",
-    "statAssisted": "Assisted",
-    "statHuman": "Human",
-    "flaggedSpans": "Flagged spans",
-    "flaggedSoon": "INLINE FLAGGING · SPRINT 2",
-    "runHistory": "Run history",
-    "historyFirst": "just now · first gen",
-    "noRuns": "NO RUNS YET",
-    "rehumanize": "Re-humanize · Sprint 2",
-    "rehumanizeTooltip": "Sprint 2 — adversarial humanizer",
+    "rehumanize": "Humanize text",
+    "rehumanizeTooltip": "Rewrite the text so it reads less like AI",
+    "humanizing": "Humanizing…",
+    "undo": "Undo",
+    "undoTooltip": "Restore the text before the last humanize",
     "toolbar": {
       "heading": "Heading",
       "bold": "Bold",
