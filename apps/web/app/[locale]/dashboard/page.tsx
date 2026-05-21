@@ -69,6 +69,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         currentBrandId={null}
         breadcrumbSection={t("breadcrumb")}
         userInitials={userInitials}
+        newPostHref={null}
       />
 
       <section

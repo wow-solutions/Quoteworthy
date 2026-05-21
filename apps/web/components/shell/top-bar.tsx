@@ -9,7 +9,9 @@ type Props = {
   breadcrumbSection?: string;
   breadcrumbCurrent?: string;
   userInitials?: string;
-  newPostHref?: string;
+  // null → hide the button (e.g. on /dashboard where no brand is selected,
+  // clicking it would loop through getBrandFromRequest's redirect).
+  newPostHref?: string | null;
 };
 
 export function TopBar({
@@ -77,35 +79,39 @@ export function TopBar({
         )}
       </nav>
 
-      <Link
-        href={newPostHref}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          height: 32,
-          padding: "0 12px",
-          background: "var(--ink)",
-          color: "var(--bg)",
-          border: "1px solid var(--ink)",
-          borderRadius: 6,
-          fontSize: 13,
-          fontWeight: 500,
-        }}
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
+      {newPostHref !== null ? (
+        <Link
+          href={newPostHref}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            height: 32,
+            padding: "0 12px",
+            background: "var(--ink)",
+            color: "var(--bg)",
+            border: "1px solid var(--ink)",
+            borderRadius: 6,
+            fontSize: 13,
+            fontWeight: 500,
+          }}
         >
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        New post
-      </Link>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          New post
+        </Link>
+      ) : (
+        <span />
+      )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <LocaleSwitcher />
