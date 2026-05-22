@@ -198,6 +198,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                   writer: t("card.writer"),
                   posts: t("card.posts"),
                   connections: t("card.connections"),
+                  settings: t("card.settings"),
                 }}
               />
             ))}
@@ -226,6 +227,7 @@ function BrandCard({
     writer: string;
     posts: string;
     connections: string;
+    settings: string;
   };
 }) {
   const color = brandColor(brand.slug);
@@ -311,7 +313,8 @@ function BrandCard({
       <div
         style={{
           display: "flex",
-          gap: 8,
+          flexWrap: "wrap",
+          gap: 6,
           alignItems: "center",
           paddingTop: 14,
           borderTop: "1px solid var(--border-subtle)",
@@ -372,6 +375,25 @@ function BrandCard({
           }}
         >
           {labels.connections}
+        </Link>
+        <Link
+          href={`/brands/${brand.id}/settings`}
+          style={{
+            height: 28,
+            padding: "0 10px",
+            background: "transparent",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: 6,
+            fontSize: 13,
+            fontWeight: 500,
+            color: "var(--ink-muted)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            textDecoration: "none",
+          }}
+        >
+          {labels.settings}
         </Link>
       </div>
     </li>

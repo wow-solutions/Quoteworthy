@@ -42,7 +42,11 @@ export const BasicsSchema = z.object({
     .max(40)
     .regex(SlugRegex, "validation.slug"),
   website_url: WebsiteShape,
-  industry: z.string().trim().max(80).optional(),
+  // industry_category_id: FK на industry_categories. Optional чтобы юзер мог
+  // создать brand без выбора (waitlist флоу). Display label кэшируется в
+  // industry_display_name для review step (не сохраняется в БД).
+  industry_category_id: z.string().uuid().optional(),
+  industry_display_name: z.string().trim().max(80).optional(),
   primary_language: z.enum(LANGUAGES),
   description: z.string().trim().max(500).optional(),
 });
@@ -115,7 +119,8 @@ export const wizardDefaults: WizardData = {
   name: "",
   slug: "",
   website_url: "",
-  industry: "",
+  industry_category_id: undefined,
+  industry_display_name: "",
   primary_language: "en",
   description: "",
   brand_voice: "",

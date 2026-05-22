@@ -1,0 +1,163 @@
+import { getLocale, getTranslations } from "next-intl/server";
+import { notFound, redirect } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { TopBar } from "@/components/shell/top-bar";
+import { BrandDot } from "@/components/brand/brand-dot";
+import type { BrandOption } from "@/components/brand/brand-switcher";
+import { brandColor } from "@/lib/brand-color";
+import { BasicsForm } from "./basics-form";
+
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function BrandSettingsPage({ params }: PageProps) {
+  const { id: brandId } = await params;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const t = await getTranslations("brandSettings");
+  const locale = await getLocale();
+
+  // Fetch brand + joined industry category for display + brand_voice from config
+  const { data: brand } = await supabase
+    .from("brands")
+    .select(
+      "id, name, slug, industry, industry_category_id, primary_language, industry_categories ( name_en, name_ru )",
+    )
+    .eq("id", brandId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!brand) notFound();
+
+  const { data: brandConfig } = await supabase
+    .from("brand_configs")
+    .select("brand_voice")
+    .eq("brand_id", brandId)
+    .maybeSingle();
+
+  // Fetch brands list для TopBar
+  const { data: brandsList } = await supabase
+    .from("brands")
+    .select("id, name, slug")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  const switcherBrands: BrandOption[] = (brandsList ?? []).map((b) => ({
+    id: b.id,
+    name: b.name,
+    slug: b.slug,
+  }));
+
+  const color = brandColor(brand.slug);
+
+  // Display name: prefer joined category, fall back to legacy industry text
+  type JoinedCategory = { name_en: string; name_ru: string };
+  const joinedCategory = brand.industry_categories as JoinedCategory | null;
+  const initialDisplayName = joinedCategory
+    ? locale === "ru"
+      ? joinedCategory.name_ru
+      : joinedCategory.name_en
+    : brand.industry;
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <TopBar
+        brands={switcherBrands}
+        currentBrandId={brand.id}
+        breadcrumbSection={t("breadcrumb")}
+        breadcrumbCurrent={brand.name}
+      />
+
+      <section style={{ maxWidth: 720, margin: "0 auto", padding: "40px 32px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 6,
+          }}
+        >
+          <BrandDot color={color} size={14} />
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 600,
+              letterSpacing: "-0.022em",
+              color: "var(--ink)",
+              margin: 0,
+            }}
+          >
+            {t("title", { brand: brand.name })}
+          </h1>
+        </div>
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--ink-faint)",
+            textTransform: "uppercase",
+            letterSpacing: "0.12em",
+            margin: "0 0 32px",
+          }}
+        >
+          {t("subtitle")}
+        </p>
+
+        {/*
+          Tabs приготовлено: сейчас одна секция «Основное». Sprint 1B добавит:
+          - Аккаунты (LinkedIn — сейчас на /brands/[id])
+          - Удаление данных (retention toggle per TODO #2)
+          Когда секций станет ≥2, конвертируем в shadcn Tabs.
+        */}
+        <h2
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            color: "var(--ink)",
+            margin: "0 0 16px",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {t("sections.basics")}
+        </h2>
+
+        <div
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: 10,
+            padding: 24,
+          }}
+        >
+          <BasicsForm
+            brandId={brand.id}
+            locale={locale}
+            initialCategoryId={brand.industry_category_id}
+            initialDisplayName={initialDisplayName}
+            initialLanguage={brand.primary_language}
+            initialBrandVoice={brandConfig?.brand_voice ?? ""}
+          />
+        </div>
+
+        <div style={{ marginTop: 32 }}>
+          <Link
+            href={`/brands/${brand.id}`}
+            style={{
+              fontSize: 13,
+              color: "var(--ink-muted)",
+              textDecoration: "none",
+            }}
+          >
+            {t("backToBrand")}
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}

@@ -24,13 +24,15 @@ export async function createBrand(input: WizardData): Promise<CreateBrandResult>
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in" };
 
-  // 1. Insert brand
+  // 1. Insert brand. industry text сохраняем для backward compat (drop в Sprint 1B+);
+  // industry_category_id — новый FK. display_name из picker для текст-кэша.
   const brandRow: TablesInsert<"brands"> = {
     account_id: user.id,
     name: v.name,
     slug: v.slug,
     website_url: normalizeWebsite(v.website_url),
-    industry: v.industry || null,
+    industry: v.industry_display_name || null,
+    industry_category_id: v.industry_category_id || null,
     description: v.description || null,
     primary_language: v.primary_language,
     additional_languages: [],

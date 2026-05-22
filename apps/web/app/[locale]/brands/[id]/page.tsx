@@ -97,12 +97,25 @@ export default async function BrandDetailPage({ params, searchParams }: PageProp
             color: "var(--ink-faint)",
             textTransform: "uppercase",
             letterSpacing: "0.12em",
-            margin: "0 0 32px",
+            margin: "0 0 8px",
           }}
         >
           {brand.industry ? `${brand.industry} · ` : ""}
           {brand.primary_language.toUpperCase()}
         </p>
+        <Link
+          href={`/brands/${brand.id}/settings`}
+          style={{
+            display: "inline-block",
+            fontSize: 13,
+            color: "var(--ink-muted)",
+            textDecoration: "underline",
+            textUnderlineOffset: 3,
+            marginBottom: 32,
+          }}
+        >
+          {t("settingsLink")}
+        </Link>
 
         {/* Toasts */}
         {sp.linkedin === "connected" && (

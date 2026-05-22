@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   FormControl,
   FormDescription,
@@ -20,11 +20,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { IndustryPicker } from "@/components/industry-picker";
 import { slugify, type WizardData } from "../schema";
 
 export function StepBasics() {
   const { control, watch, setValue, getValues } = useFormContext<WizardData>();
   const t = useTranslations("wizard.steps.basics");
+  const locale = useLocale();
   const name = watch("name");
 
   // Auto-fill slug from name until the user touches the slug field manually.
@@ -89,13 +91,24 @@ export function StepBasics() {
 
       <FormField
         control={control}
-        name="industry"
+        name="industry_category_id"
         render={({ field }) => (
           <FormItem>
             <FormLabel>{t("industryLabel")}</FormLabel>
             <FormDescription>{t("industryDescription")}</FormDescription>
             <FormControl>
-              <Input placeholder={t("industryPlaceholder")} {...field} />
+              <IndustryPicker
+                value={field.value ?? null}
+                onChange={(id, displayName) => {
+                  field.onChange(id ?? undefined);
+                  setValue("industry_display_name", displayName ?? "", {
+                    shouldValidate: false,
+                  });
+                }}
+                brandId={null}
+                locale={locale}
+                initialDisplayName={getValues("industry_display_name")}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

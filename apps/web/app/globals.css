@@ -129,6 +129,13 @@
   --editor-max-w: 720px;
 }
 
+/* Newsreader не содержит кириллицу — для русского fallback на Times New Roman
+   выглядит коряво. Переключаемся на sans-serif (Geist) для serif-контекстов
+   когда документ на русском. Italic style preserved через CSS font-style. */
+:lang(ru) {
+  --font-serif: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
 /* =========================================================================
    DARK THEME (default — HANDOFF dark-first)
    ========================================================================= */

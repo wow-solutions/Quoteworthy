@@ -53,9 +53,10 @@
     },
     "card": {
       "newBadge": "New",
-      "writer": "Writer →",
-      "posts": "Posts →",
-      "connections": "Connections →"
+      "writer": "Writer",
+      "posts": "Posts",
+      "connections": "Connections",
+      "settings": "Settings"
     }
   },
   "brandDetail": {
@@ -75,7 +76,41 @@
       "connect": "Connect LinkedIn",
       "reconnect": "Reconnect",
       "disconnect": "Disconnect"
-    }
+    },
+    "settingsLink": "Edit brand settings →"
+  },
+  "brandSettings": {
+    "breadcrumb": "Settings",
+    "title": "{brand} settings",
+    "subtitle": "Industry · language · accounts",
+    "sections": {
+      "basics": "Basics"
+    },
+    "industryLabel": "Industry",
+    "industryDescription": "Pick the category that best describes this brand. Used to ground topic research and tone defaults.",
+    "languageLabel": "Primary language",
+    "languageDescription": "Default language new posts will be generated in. You can override per-post in the writer.",
+    "voiceLabel": "Brand voice",
+    "voiceDescription": "Free-text guidance on how this brand sounds — tone, perspective, words to use or avoid. Fed straight into every generation prompt.",
+    "voicePlaceholder": "e.g. Direct, no fluff. Talks to facilities managers, not consumers. Uses metric units. Never refers to clients as 'customers' — they're 'operators'.",
+    "save": "Save",
+    "saved": "Saved",
+    "backToBrand": "← Back to brand"
+  },
+  "industryPicker": {
+    "placeholder": "Pick an industry…",
+    "searchPlaceholder": "Type to search (e.g. hvac, bakery, marketing)",
+    "typeToSearch": "Start typing to find your category",
+    "noResults": "No matching categories.",
+    "clickOther": "Don't see your category?",
+    "clickOtherShort": "Not the right one? Suggest a category",
+    "waitlistTitle": "Suggest a category",
+    "waitlistDescription": "Describe what your brand does. We review suggestions weekly and add categories that come up often.",
+    "waitlistTextPlaceholder": "e.g. Vape shop, Crystal healing studio, Drone aerial photography…",
+    "waitlistEmailPlaceholder": "Email (optional, so we can notify you)",
+    "waitlistSubmit": "Send",
+    "waitlistCancel": "Cancel",
+    "waitlistThanks": "Thanks! We'll review your suggestion."
   },
   "landing": {
     "header": {
@@ -295,8 +330,7 @@
         "websiteDescription": "Optional. Bare domain works — e.g. <code>24clima.com</code>. We'll add <code>https://</code> for you.",
         "websitePlaceholder": "24clima.com",
         "industryLabel": "Industry",
-        "industryDescription": "Free text — what business is this? Used to ground the AI when it writes about adjacent topics. Optional.",
-        "industryPlaceholder": "HVAC, B2B distributor",
+        "industryDescription": "Pick the category that best fits — type to search. Used to ground the AI when it writes about adjacent topics. Optional.",
         "languageLabel": "Primary language *",
         "languageDescription": "The main language posts will be generated in. You can change it per-post later.",
         "descriptionLabel": "One-line description",

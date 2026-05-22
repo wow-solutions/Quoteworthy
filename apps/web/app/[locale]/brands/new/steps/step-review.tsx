@@ -42,7 +42,7 @@ export function StepReview() {
           <Row label={t("name")} value={v.name} />
           <Row label={t("slug")} value={v.slug} />
           <Row label={t("website")} value={v.website_url} />
-          <Row label={t("industry")} value={v.industry} />
+          <Row label={t("industry")} value={v.industry_display_name} />
           <Row label={t("language")} value={v.primary_language} />
           <Row label={t("description")} value={v.description} />
         </dl>

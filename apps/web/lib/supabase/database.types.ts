@@ -225,6 +225,7 @@ export type Database = {
           description: string | null
           id: string
           industry: string | null
+          industry_category_id: string | null
           name: string
           primary_language: string
           slug: string
@@ -241,6 +242,7 @@ export type Database = {
           description?: string | null
           id?: string
           industry?: string | null
+          industry_category_id?: string | null
           name: string
           primary_language?: string
           slug: string
@@ -257,6 +259,7 @@ export type Database = {
           description?: string | null
           id?: string
           industry?: string | null
+          industry_category_id?: string | null
           name?: string
           primary_language?: string
           slug?: string
@@ -271,6 +274,13 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brands_industry_category_id_fkey"
+            columns: ["industry_category_id"]
+            isOneToOne: false
+            referencedRelation: "industry_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -349,6 +359,145 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      industry_categories: {
+        Row: {
+          created_at: string
+          id: string
+          industry_group: string
+          is_dogfood_anchor: boolean
+          keywords: string[]
+          name_en: string
+          name_es: string | null
+          name_ru: string
+          searchable: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          industry_group: string
+          is_dogfood_anchor?: boolean
+          keywords?: string[]
+          name_en: string
+          name_es?: string | null
+          name_ru: string
+          searchable?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          industry_group?: string
+          is_dogfood_anchor?: boolean
+          keywords?: string[]
+          name_en?: string
+          name_es?: string | null
+          name_ru?: string
+          searchable?: string | null
+        }
+        Relationships: []
+      }
+      industry_requests: {
+        Row: {
+          account_id: string
+          approved_category_id: string | null
+          brand_id: string | null
+          created_at: string
+          email: string | null
+          id: string
+          query_text: string
+          status: string
+        }
+        Insert: {
+          account_id: string
+          approved_category_id?: string | null
+          brand_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          query_text: string
+          status?: string
+        }
+        Update: {
+          account_id?: string
+          approved_category_id?: string | null
+          brand_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          query_text?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "industry_requests_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "industry_requests_approved_category_id_fkey"
+            columns: ["approved_category_id"]
+            isOneToOne: false
+            referencedRelation: "industry_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "industry_requests_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      industry_search_misses: {
+        Row: {
+          account_id: string
+          brand_id: string | null
+          clicked_other: boolean
+          created_at: string
+          id: string
+          picked_index: number | null
+          query_text: string
+          top_5_ids: string[]
+        }
+        Insert: {
+          account_id: string
+          brand_id?: string | null
+          clicked_other?: boolean
+          created_at?: string
+          id?: string
+          picked_index?: number | null
+          query_text: string
+          top_5_ids?: string[]
+        }
+        Update: {
+          account_id?: string
+          brand_id?: string | null
+          clicked_other?: boolean
+          created_at?: string
+          id?: string
+          picked_index?: number | null
+          query_text?: string
+          top_5_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "industry_search_misses_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "industry_search_misses_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
             referencedColumns: ["id"]
           },
         ]
@@ -529,10 +678,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      increment_topic_impressions: {
-        Args: { p_candidate_ids: string[] }
-        Returns: undefined
-      }
       filter_unused_topic_texts: {
         Args: {
           p_brand_id: string
@@ -541,6 +686,14 @@ export type Database = {
           p_threshold?: number
         }
         Returns: string[]
+      }
+      immutable_array_to_string: {
+        Args: { arr: string[]; delim: string }
+        Returns: string
+      }
+      increment_topic_impressions: {
+        Args: { p_candidate_ids: string[] }
+        Returns: undefined
       }
       insert_post_and_mark_candidate: {
         Args: {
@@ -587,6 +740,45 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "posts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      log_industry_search_miss: {
+        Args: {
+          p_brand_id?: string
+          p_clicked_other?: boolean
+          p_picked_index?: number
+          p_query_text: string
+          p_top_5_ids?: string[]
+        }
+        Returns: undefined
+      }
+      search_industries: {
+        Args: { p_lang?: string; p_limit?: number; p_query: string }
+        Returns: {
+          id: string
+          industry_group: string
+          name_en: string
+          name_ru: string
+          similarity: number
+        }[]
+      }
+      submit_industry_request: {
+        Args: { p_brand_id?: string; p_email?: string; p_query_text: string }
+        Returns: {
+          account_id: string
+          approved_category_id: string | null
+          brand_id: string | null
+          created_at: string
+          email: string | null
+          id: string
+          query_text: string
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "industry_requests"
           isOneToOne: true
           isSetofReturn: false
         }
